@@ -38,6 +38,9 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .field textarea { resize: vertical; min-height: 68px; }
+  .field input, .field select, .field textarea { max-width: 100%; }
   body {
     font-family: var(--font-b); color: var(--ink); font-size: 15px; line-height: 1.5;
     background: var(--bg); min-height: 100vh; padding-bottom: 84px; -webkit-font-smoothing: antialiased;
@@ -285,7 +288,7 @@
   .bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 
   #modal { position: fixed; inset: 0; background: rgba(30, 30, 40, .4); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
-  #modalBox { background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 20px 26px; width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto; animation: slideup .3s cubic-bezier(.2, .8, .2, 1); position: relative; }
+  #modalBox { background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 20px 26px; width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto; overflow-x: hidden; animation: slideup .3s cubic-bezier(.2, .8, .2, 1); position: relative; }
   #modalBox::before { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; background: var(--line); border-radius: 999px; }
   @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
   #modalBox h3 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
@@ -456,7 +459,7 @@ var I18N = {
     // form labels/placeholders
     fl_milk_ml: "ปริมาณนม (มล.)", fl_water_ml: "ปริมาณน้ำ (มล.)", fl_menu_eaten: "เมนูที่ทาน", fl_pref_note: "ความชอบ/หมายเหตุ", fl_charac: "ลักษณะ", fl_med_dose: "ชื่อยาและปริมาณ", fl_event: "เหตุการณ์ / อุบัติเหตุ + อาการที่ต้องสังเกต", fl_amount_ml: "ปริมาณ (มล.)", fl_color: "สี", fl_smell: "กลิ่น", fl_date: "วันที่", fl_head_cm: "รอบศีรษะ (ซม.)", fl_teeth: "🦷 จำนวนฟัน (ซี่)", fl_given_date: "วันที่ฉีด", fl_place: "สถานที่", fl_lot: "Lot No. (ถ้ามี)", fl_vaccine_name: "ชื่อวัคซีน", fl_type: "ประเภท", opt_vac_optional: "วัคซีนเสริม / ซื้อเพิ่มเอง", opt_vac_core: "วัคซีนหลัก (ตามแผน)", fl_due_shot: "กำหนดฉีด", fl_note_opt: "หมายเหตุ (ไม่บังคับ)", opt_illness: "เจ็บป่วย", opt_allergy: "แพ้อาหาร/ยา", opt_dental: "ทำฟัน", opt_checkup: "ตรวจสุขภาพ", opt_other: "อื่นๆ", fl_title: "หัวข้อ", fl_detail: "รายละเอียด", fl_subject_appt: "เรื่อง", fl_appt_date: "วันที่นัด", fl_time: "เวลา", fl_remind_lead: "แจ้งเตือนล่วงหน้า (ผ่าน LINE)", opt_same_day: "วันนัดพอดี", opt_b1: "ก่อน 1 วัน", opt_b2: "ก่อน 2 วัน", opt_b3: "ก่อน 3 วัน", opt_b7: "ก่อน 7 วัน", fl_note: "หมายเหตุ", fl_item: "รายการ", fl_product_name: "ชื่อสินค้า", fl_category: "หมวด", fl_img_link_opt: "ลิงก์รูปสินค้า (ไม่บังคับ)", fl_note_size: "โน้ต เช่น ไซส์ / ร้านที่เคยซื้อ", fl_price: "ราคา (บาท)", fl_link_aff: "ลิงก์ (affiliate ได้)", fl_qty_left: "จำนวนคงเหลือ", fl_unit: "หน่วย", fl_min_qty: "แจ้งเตือนเมื่อเหลือ ≤", fl_recommend: "สินค้าแนะนำ/ร้านที่ซื้อประจำ", fl_amount_baht: "จำนวนเงิน (บาท)", fl_name: "ชื่อ", fl_goal: "เป้าหมาย (บาท)", fl_current_amt: "ยอดปัจจุบัน (บาท)", fl_package: "ชื่อแพ็กเกจ/กรมธรรม์", fl_insurer: "บริษัทประกัน", fl_premium: "เบี้ยประกัน/ปี (บาท)", fl_coverage: "ความคุ้มครองโดยย่อ", fl_renew: "วันครบกำหนดต่ออายุ (เตือนผ่าน LINE ล่วงหน้า 14 วัน)", fl_policy_link: "ลิงก์แพ็กเกจ/กรมธรรม์", sep_agent: "👤 ตัวแทน", fl_agent_name: "ชื่อตัวแทน", fl_agent_phone: "เบอร์ติดต่อตัวแทน", fl_note_short: "โน้ต", fl_caption: "คำบรรยาย", fl_add_photos: "เพิ่มรูป (เลือกได้หลายรูป)", fl_media_link: "หรือแปะลิงก์รูป/วิดีโอ (Drive/YouTube)", fl_activity: "กิจกรรม", fl_food_name: "ชื่ออาหาร", fl_preference: "ความชอบ", fl_menu: "เมนู", fl_level: "ระดับ", fl_school_name: "ชื่อโรงเรียน", fl_teacher: "ครูประจำชั้น", fl_contact: "เบอร์/ไลน์ติดต่อ", fl_schedule_note: "ตารางเรียน/หมายเหตุ", fl_homework: "การบ้าน", fl_subject_hw: "วิชา", fl_due: "กำหนดส่ง", fl_pass_min: "รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)", fl_pass_confirm: "ยืนยันรหัสผ่าน", fl_fullname: "ชื่อ-นามสกุล", fl_nickname: "ชื่อเล่น", fl_gender: "เพศ", fl_birthdate: "วันเกิด", fl_blood: "กรุ๊ปเลือด", fl_hospital: "โรงพยาบาลประจำ", fl_doctor: "แพทย์ประจำ", fl_emergency: "เบอร์ฉุกเฉิน", fl_allergy_hist: "ประวัติแพ้ (อาหาร/ยา)", fl_disease: "โรคประจำตัว", ph_menu_eaten: "เช่น ข้าวต้มไก่", ph_pref_note: "เช่น ชอบมาก กินหมด", ph_med_dose: "เช่น พาราเซตามอล 2.5ml", ph_event: "เช่น ล้มหัวฟาดพื้น — สังเกตอาการอาเจียน/ซึม 24-48 ชม. / โดนน้ำร้อนลวกมือ", ph_shirt: "เช่น 80, 2T", ph_shoe: "เช่น 13.5 ซม., US 5", ph_place_hosp: "เช่น รพ.เด็ก", ph_vaccine: "เช่น IPD, ไข้หวัดใหญ่, สุกใส", ph_title_illness: "เช่น เป็นไข้หวัด", ph_subject_appt: "เช่น ตรวจสุขภาพ 18 เดือน, ฉีดวัคซีน", ph_place_bkk: "เช่น รพ.กรุงเทพ", ph_prep_item: "เช่น เตรียมชุดนอนไปโรงเรียน", ph_product_soap: "เช่น สบู่เหลวเด็ก Cetaphil Baby", ph_product_diaper: "เช่น ผ้าอ้อม Merries M", ph_unit: "ชิ้น / แพ็ก / กระป๋อง", ph_recommend: "เช่น Shopee ร้าน xxx", ph_expense_item: "เช่น ผ้าอ้อม 1 ลัง", ph_saving_name: "เช่น กองทุนค่าเทอมมหาลัย", ph_insurer: "เช่น AIA / เมืองไทย", ph_coverage: "เช่น IPD 5 แสน + OPD 3 หมื่น", ph_package: "เช่น ประกันสุขภาพเด็ก Smart Kids", ph_title_mem: "เช่น เที่ยวทะเลครั้งแรก", ph_caption: "เล่าเรื่องราวของวันนั้น...", ph_activity: "เช่น ตื่น+กินนม, งีบเช้า, ข้าวกลางวัน", ph_act_note: "เช่น นม 180 มล.", ph_food: "เช่น ฟักทองบด, กล้วย", ph_meal: "เช่น ข้าวต้มปลา + ผลไม้",
     // toast/confirm ทั่วไป
-    saved: 'บันทึกแล้ว ✅', added: 'เพิ่มแล้ว ✅', tst_appt: 'บันทึกนัดแล้ว ✅ จะเตือนผ่าน LINE', tst_vaccine: 'เพิ่มวัคซีนแล้ว ✅',
+    saved: 'บันทึกแล้ว ✅', added: 'เพิ่มแล้ว ✅', saving: 'กำลังบันทึก...', cf_del_child: 'ลบโปรไฟล์ "{name}"? ข้อมูลของลูกคนนี้จะถูกลบ', tst_child_removed: 'ลบโปรไฟล์ลูกแล้ว', tst_appt: 'บันทึกนัดแล้ว ✅ จะเตือนผ่าน LINE', tst_vaccine: 'เพิ่มวัคซีนแล้ว ✅',
     tst_album: 'บันทึกอัลบั้มแล้ว 💛', tst_menu: 'บันทึกเมนูแล้ว ✅', tst_hw_done: 'เสร็จแล้ว 🎉', tst_role: 'เปลี่ยนสิทธิ์แล้ว ✅',
     tst_remind: 'ตั้งค่าแจ้งเตือนแล้ว ✅', tst_member_rm: 'ลบสมาชิกแล้ว ✅', tst_pass_set: 'ตั้งรหัสผ่านแล้ว ✅',
     tst_retention: 'ตั้งเก็บบันทึก {n} วันล่าสุด ✅', tst_history_limit: 'ดูย้อนหลังได้ {n} วันล่าสุด',
@@ -542,7 +545,7 @@ var I18N = {
     // form labels/placeholders
     fl_milk_ml: "Milk amount (ml)", fl_water_ml: "Water amount (ml)", fl_menu_eaten: "Menu eaten", fl_pref_note: "Preference / note", fl_charac: "Type/appearance", fl_med_dose: "Medicine & dose", fl_event: "Event / accident + symptoms to watch", fl_amount_ml: "Amount (ml)", fl_color: "Colour", fl_smell: "Smell", fl_date: "Date", fl_head_cm: "Head circumference (cm)", fl_teeth: "🦷 Teeth (count)", fl_given_date: "Date given", fl_place: "Place", fl_lot: "Lot No. (if any)", fl_vaccine_name: "Vaccine name", fl_type: "Type", opt_vac_optional: "Optional / self-purchased", opt_vac_core: "Core (scheduled)", fl_due_shot: "Due date", fl_note_opt: "Note (optional)", opt_illness: "Illness", opt_allergy: "Food/drug allergy", opt_dental: "Dental", opt_checkup: "Checkup", opt_other: "Other", fl_title: "Title", fl_detail: "Details", fl_subject_appt: "Subject", fl_appt_date: "Appointment date", fl_time: "Time", fl_remind_lead: "Reminder lead time (via LINE)", opt_same_day: "On the day", opt_b1: "1 day before", opt_b2: "2 days before", opt_b3: "3 days before", opt_b7: "7 days before", fl_note: "Note", fl_item: "Item", fl_product_name: "Product name", fl_category: "Category", fl_img_link_opt: "Product image link (optional)", fl_note_size: "Note e.g. size / shop", fl_price: "Price (THB)", fl_link_aff: "Link (affiliate ok)", fl_qty_left: "Quantity left", fl_unit: "Unit", fl_min_qty: "Alert when ≤", fl_recommend: "Recommended item / usual shop", fl_amount_baht: "Amount (THB)", fl_name: "Name", fl_goal: "Goal (THB)", fl_current_amt: "Current amount (THB)", fl_package: "Package / policy name", fl_insurer: "Insurer", fl_premium: "Premium / year (THB)", fl_coverage: "Coverage summary", fl_renew: "Renewal date (LINE reminder 14 days ahead)", fl_policy_link: "Package / policy link", sep_agent: "👤 Agent", fl_agent_name: "Agent name", fl_agent_phone: "Agent phone", fl_note_short: "Note", fl_caption: "Caption", fl_add_photos: "Add photos (multiple)", fl_media_link: "Or paste an image/video link (Drive/YouTube)", fl_activity: "Activity", fl_food_name: "Food name", fl_preference: "Preference", fl_menu: "Menu", fl_level: "Level", fl_school_name: "School name", fl_teacher: "Class teacher", fl_contact: "Phone / LINE contact", fl_schedule_note: "Schedule / note", fl_homework: "Homework", fl_subject_hw: "Subject", fl_due: "Due date", fl_pass_min: "Password (min 6 chars)", fl_pass_confirm: "Confirm password", fl_fullname: "Full name", fl_nickname: "Nickname", fl_gender: "Gender", fl_birthdate: "Birthdate", fl_blood: "Blood group", fl_hospital: "Primary hospital", fl_doctor: "Primary doctor", fl_emergency: "Emergency contact", fl_allergy_hist: "Allergy history (food/drug)", fl_disease: "Chronic conditions", ph_menu_eaten: "e.g. chicken congee", ph_pref_note: "e.g. loved it, ate all", ph_med_dose: "e.g. paracetamol 2.5ml", ph_event: "e.g. fell and hit head — watch for vomiting/drowsiness 24-48h / scalded hand", ph_shirt: "e.g. 80, 2T", ph_shoe: "e.g. 13.5 cm, US 5", ph_place_hosp: "e.g. Children's Hosp.", ph_vaccine: "e.g. IPD, flu, chickenpox", ph_title_illness: "e.g. caught a cold", ph_subject_appt: "e.g. 18-month checkup, vaccination", ph_place_bkk: "e.g. Bangkok Hospital", ph_prep_item: "e.g. pack pyjamas for school", ph_product_soap: "e.g. Cetaphil Baby wash", ph_product_diaper: "e.g. Merries M diapers", ph_unit: "pcs / pack / can", ph_recommend: "e.g. Shopee shop xxx", ph_expense_item: "e.g. 1 carton of diapers", ph_saving_name: "e.g. university tuition fund", ph_insurer: "e.g. AIA / Muang Thai", ph_coverage: "e.g. IPD 500k + OPD 30k", ph_package: "e.g. Smart Kids child health plan", ph_title_mem: "e.g. first trip to the beach", ph_caption: "Tell the story of that day...", ph_activity: "e.g. wake+milk, morning nap, lunch", ph_act_note: "e.g. 180 ml milk", ph_food: "e.g. mashed pumpkin, banana", ph_meal: "e.g. fish congee + fruit",
     // toast/confirm generic
-    saved: 'Saved ✅', added: 'Added ✅', tst_appt: 'Appointment saved ✅ — LINE reminder set', tst_vaccine: 'Vaccine added ✅',
+    saved: 'Saved ✅', added: 'Added ✅', saving: 'Saving...', cf_del_child: 'Delete profile "{name}"? This child\'s data will be removed.', tst_child_removed: 'Child profile removed', tst_appt: 'Appointment saved ✅ — LINE reminder set', tst_vaccine: 'Vaccine added ✅',
     tst_album: 'Album saved 💛', tst_menu: 'Menu saved ✅', tst_hw_done: 'Done 🎉', tst_role: 'Role updated ✅',
     tst_remind: 'Reminder settings saved ✅', tst_member_rm: 'Member removed ✅', tst_pass_set: 'Password set ✅',
     tst_retention: 'Keeping the last {n} days ✅', tst_history_limit: 'You can view the last {n} days',
@@ -692,14 +695,16 @@ var LOG_CHIP = { wake: 'bg-yellow', sleep: 'bg-blue', nap: 'bg-blue', bath: 'bg-
 async function startApp() {
   var boot = await api('bootstrap');
   S.user = boot.user;
-  try { S.retention = Number((await api('settings.get')).logRetentionDays) || 30; } catch (e) { S.retention = 30; }
   S.children = boot.children;
   S.child = S.children.find(function (c) { return c.id === boot.activeChildId; }) || S.children[0] || null;
   $('#tabbar').classList.remove('hidden');
   applyTheme();
   applyNavLabels();
   renderChildSelect();
-  go('home');
+  go('home'); // แสดงหน้าแรกทันที ไม่รอ settings
+  // ค่าเก็บบันทึกย้อนหลัง (retention) — โหลดเบื้องหลัง ไม่บล็อกหน้าแรก
+  S.retention = 30;
+  api('settings.get').then(function (st) { S.retention = Number(st.logRetentionDays) || 30; }).catch(function () { });
 }
 
 (async function init() {
@@ -870,13 +875,23 @@ function openForm(title, fields, onSubmit, submitLabel) {
   $('#modalBox').innerHTML = html;
   $('#modal').classList.remove('hidden');
   $('#modalSubmit').onclick = function () {
+    var btn = this;
+    if (btn.disabled) return; // กันกดซ้ำระหว่างบันทึก (กันข้อมูลซ้ำ)
     var vals = {};
     fields.forEach(function (f) {
       if (f.type === 'label') return;
       var el = $('#f_' + f.key);
       vals[f.key] = f.type === 'file' ? (f.multiple ? Array.prototype.slice.call(el.files) : el.files[0]) : el.value;
     });
-    onSubmit(vals);
+    var orig = btn.textContent;
+    btn.disabled = true; btn.textContent = t('saving');
+    var ret = onSubmit(vals);
+    // คืนปุ่มให้กดได้อีกครั้ง ถ้ายังไม่ปิด modal (เช่น validation ไม่ผ่าน / เซิร์ฟเวอร์ error)
+    Promise.resolve(ret).catch(function () { }).then(function () {
+      setTimeout(function () {
+        if (!$('#modal').classList.contains('hidden')) { btn.disabled = false; btn.textContent = orig; }
+      }, ret && typeof ret.then === 'function' ? 0 : 20000);
+    });
   };
 }
 function closeModal() { $('#modal').classList.add('hidden'); }
@@ -884,8 +899,8 @@ function closeModal() { $('#modal').classList.add('hidden'); }
 /* ================= หน้าหลัก ================= */
 async function pageHome() {
   if (needChild()) return;
-  var d = await api('dashboard', { childId: S.child.id });
-  await getRefs();
+  var _r = await Promise.all([api('dashboard', { childId: S.child.id }), getRefs()]); // ยิงพร้อมกัน เร็วขึ้น
+  var d = _r[0];
   $('#childAge').textContent = clientAgeTH(S.child.birthdate);
 
   var html = '';
@@ -2156,7 +2171,7 @@ async function renderSetting() {
       '<span class="ico-chip ' + (isGirl ? 'bg-pink' : 'bg-blue') + '">' + (isGirl ? '👧' : '👶') + '</span>' +
       '<div class="grow"><b>' + esc(c.nickname || c.name) + '</b> <span class="badge ' + (isGirl ? 'b-girl' : 'b-boy') + '">' + clientAgeTH(c.birthdate) + '</span>' +
       '<br><small>' + esc(c.name) + '</small></div>' +
-      (canEdit() ? btnEdit('editChild(\'' + c.id + '\')') : '') +
+      (canEdit() ? btnEdit('editChild(\'' + c.id + '\')') + btnDel('delChild(\'' + c.id + '\',\'' + esc(c.nickname || c.name) + '\')') : '') +
       '</div>' +
       '<div class="child-meta">' +
       '<span>🎂 ' + fmtD(c.birthdate) + '</span><span class="' + (isGirl ? 'gcol-girl' : 'gcol-boy') + '" style="font-weight:700">' + (isGirl ? '♀' : '♂') + ' ' + esc(enumLabel(c.gender) || '-') + '</span>' +
@@ -2289,7 +2304,7 @@ function editChild(id) {
     { key: 'diseases', label: t('fl_disease'), type: 'textarea', value: c.diseases }
   ], function (v) {
     if (id) v.id = id;
-    api('save', { sheet: 'Children', record: v }).then(function (saved) {
+    return api('save', { sheet: 'Children', record: v }).then(function (saved) {
       closeModal(); toast(id ? t('tst_edited') : t('tst_child_added'));
       return api('bootstrap');
     }).then(function (boot) {
@@ -2297,6 +2312,18 @@ function editChild(id) {
       if (!S.child) S.child = S.children[0];
       applyTheme(); renderChildSelect(); renderSetting();
     });
+  });
+}
+
+function delChild(id, name) {
+  if (!confirm(t('cf_del_child').replace('{name}', name))) return;
+  api('delete', { sheet: 'Children', id: id }).then(function () {
+    toast(t('tst_child_removed'));
+    return api('bootstrap');
+  }).then(function (boot) {
+    S.children = boot.children;
+    if (S.child && !S.children.find(function (c) { return c.id === S.child.id; })) S.child = S.children[0] || null;
+    applyTheme(); renderChildSelect(); renderSetting();
   });
 }
 </script>
