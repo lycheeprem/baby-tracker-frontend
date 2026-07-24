@@ -1,0 +1,2304 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>นับนับ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
+
+  /* ===== ธีมอบอุ่นหวานๆ พื้นครีม + พาสเทล — accent ตามเพศ (ชาย=ฟ้า / หญิง=ชมพู) ===== */
+  :root {
+    --bg: #fbf5ea;          /* พื้นครีมอุ่น */
+    --card: #fffdf8;        /* การ์ดขาวนวล */
+    --ink: #574a44;         /* ตัวอักษรน้ำตาลอุ่น */
+    --muted: #a89b8f;
+    --line: #efe6d6;        /* เส้นขอบครีม */
+    /* accent เริ่มต้น = ชาย (ฟ้าพาสเทล) */
+    --accent: #7cb8e0;
+    --accent-dark: #4f93c4;
+    --accent-soft: #e7f2fa;
+    /* สีสถานะ (อ่อน อบอุ่น) */
+    --ok: #4f9c72; --ok-soft: #e6f4ec;
+    --warn: #c08a2e; --warn-soft: #fbf0d9;
+    --danger: #d6756e; --danger-soft: #fbe8e5;
+    /* พาสเทลอุ่น สำหรับจุดต่างๆ */
+    --p-peach: #fde8dc; --p-mint: #e4f3e9; --p-blue: #e7f1fb; --p-pink: #fce6ef; --p-lav: #efe9f8; --p-yellow: #fdf3d9;
+    /* กล่องไอคอนเล็กในบันทึกรายวัน (คงไว้) */
+    --c-coral: #fde3d8; --c-yellow: #fdf1d6; --c-teal: #e3f4ea; --c-blue: #e6f1fb; --c-pink: #fce6ef;
+    --shadow-sm: 0 3px 14px -6px rgba(150, 110, 70, .2);
+    --r: 22px; --r-sm: 16px;
+    --font-b: 'IBM Plex Sans Thai', -apple-system, 'Noto Sans Thai', 'Sukhumvit Set', sans-serif;
+    --font-d: var(--font-b);
+  }
+  body.theme-girl {
+    --accent: #ef9ec2;
+    --accent-dark: #d76d9c;
+    --accent-soft: #fceaf2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: var(--font-b); color: var(--ink); font-size: 15px; line-height: 1.5;
+    background: var(--bg); min-height: 100vh; padding-bottom: 84px; -webkit-font-smoothing: antialiased;
+  }
+
+  #topbar {
+    position: sticky; top: 0; z-index: 10; padding: 14px 16px 10px;
+    display: flex; align-items: center; gap: 10px; background: var(--bg);
+  }
+  #childSelect {
+    font-family: var(--font-b); font-size: 14px; font-weight: 600;
+    border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; max-width: 60%; cursor: pointer;
+  }
+  #childAge {
+    color: var(--accent-dark); font-size: 12.5px; font-weight: 700;
+    background: var(--accent-soft); padding: 4px 12px; border-radius: 999px;
+  }
+  #childAge:empty { display: none; }
+  #content { padding: 4px 16px 20px; max-width: 640px; margin: 0 auto; animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  #tabbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+    display: flex; justify-content: space-around;
+    background: rgba(255, 255, 255, .94); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  }
+  #tabbar button {
+    flex: 1; border: none; background: none; padding: 8px 4px; font-size: 20px;
+    color: var(--muted); cursor: pointer; border-radius: 14px; font-family: var(--font-b);
+  }
+  #tabbar button span { display: block; font-size: 10.5px; margin-top: 2px; font-weight: 600; }
+  #tabbar button.active { color: var(--accent-dark); background: var(--accent-soft); }
+
+  /* Hero — minimal ขาว + tint ตามธีม | emoji มุมบนขวา ไม่ทับเนื้อหา */
+  .hero {
+    background: var(--accent-soft); border: 1px solid var(--line);
+    border-radius: var(--r); padding: 20px 84px 18px 20px; color: var(--ink);
+    position: relative; overflow: hidden; margin-bottom: 14px;
+  }
+  .hero::after { content: '👶'; position: absolute; top: 8px; right: 8px; bottom: auto; font-size: 66px; opacity: .55; line-height: 1; }
+  .hero.girl::after { content: '👧'; }
+  .hero-name { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .hero-age { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+  .hero-chips { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .hero-chip { background: #fff; border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+
+  /* ปุ่มปิดแจ้งเตือน */
+  .alert-x {
+    border: none; background: var(--bg); color: var(--muted); width: 26px; height: 26px;
+    border-radius: 50%; font-size: 13px; cursor: pointer; line-height: 1; flex-shrink: 0;
+  }
+  .alert-x:active { background: var(--line); }
+
+  .card {
+    background: var(--card); border-radius: var(--r-sm); padding: 14px;
+    margin-bottom: 12px; border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  }
+  .card h3 {
+    font-size: 15.5px; margin-bottom: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .card h3.left { justify-content: flex-start; }
+  /* โน้ตวันนี้ — minimal มีแถบ accent ด้านซ้าย */
+  .card.note-card { border-left: 4px solid var(--accent); background: var(--accent-soft); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  /* กล่องสถิติ — พาสเทลอุ่น สลับสี (จุดที่ลงพาสเทล) */
+  .stat { text-align: center; padding: 12px 4px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--p-peach); }
+  .grid3 .stat:nth-child(6n+2) { background: var(--p-mint); }
+  .grid3 .stat:nth-child(6n+3) { background: var(--p-blue); }
+  .grid3 .stat:nth-child(6n+4) { background: var(--p-pink); }
+  .grid3 .stat:nth-child(6n+5) { background: var(--p-lav); }
+  .grid3 .stat:nth-child(6n+6) { background: var(--p-yellow); }
+  .grid2 .stat:nth-child(4n+2) { background: var(--p-mint); }
+  .grid2 .stat:nth-child(4n+3) { background: var(--p-blue); }
+  .grid2 .stat:nth-child(4n+4) { background: var(--p-pink); }
+  /* สีเฉพาะช่อง (override การสลับสีอัตโนมัติ) */
+  .stat.st-peach { background: var(--p-peach) !important; }
+  .stat.st-yellow { background: var(--p-yellow) !important; }
+  .stat.st-mint { background: var(--p-mint) !important; }
+  .stat.st-pink { background: var(--p-pink) !important; }
+  .stat.st-lav { background: var(--p-lav) !important; }
+  .stat.st-blue { background: var(--p-blue) !important; }
+  .stat b { display: block; font-size: 21px; font-weight: 700; color: var(--ink); line-height: 1.1; }
+  .stat small { color: var(--ink); opacity: .6; font-size: 11.5px; font-weight: 600; }
+  .stat-ico { font-size: 20px; display: block; margin-bottom: 2px; }
+  .cutoff-note { font-size: 10.5px; font-weight: 500; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 999px; }
+  .std-note { margin-top: 10px; background: var(--accent-soft); border-radius: 12px; padding: 8px 12px; font-size: 12.5px; line-height: 1.7; color: var(--ink); }
+
+  .qbtn {
+    border: 1px solid var(--line); border-radius: var(--r-sm); padding: 13px 4px; font-size: 13px;
+    background: var(--card); color: var(--ink); cursor: pointer; font-family: var(--font-b);
+    font-weight: 600; transition: transform .12s;
+  }
+  .qbtn:active { transform: scale(.96); }
+
+  /* ปุ่ม — ข้อความล้วน, primary ใช้สี accent ตามธีม */
+  .btn {
+    border: none; border-radius: 999px; padding: 11px 18px; font-size: 14.5px;
+    background: var(--accent); color: #fff; cursor: pointer; font-family: var(--font-b);
+    font-weight: 600; transition: transform .12s;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn.sm { padding: 6px 13px; font-size: 13px; }
+  .btn.gray { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.red { background: #fff; color: var(--danger); border: 1px solid var(--line); }
+  .btn.green { background: #fff; color: var(--accent-dark); border: 1px solid var(--line); }
+
+  .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: none; }
+  .row .grow { flex: 1; min-width: 0; }
+  .row small { color: var(--muted); }
+
+  /* กล่องไอคอนเล็ก (บันทึกรายวัน) — คงสีเดิมตามที่ชอบ */
+  .ico-chip { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-size: 19px; }
+  .bg-coral { background: var(--c-coral); } .bg-yellow { background: var(--c-yellow); }
+  .bg-teal { background: var(--c-teal); } .bg-blue { background: var(--c-blue); } .bg-pink { background: var(--c-pink); }
+
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-dark); font-weight: 600; white-space: nowrap; }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.danger { background: var(--danger-soft); color: var(--danger); }
+  .badge.ok { background: var(--ok-soft); color: var(--ok); }
+
+  /* checkbox วงกลม — ติ๊กแล้วเป็นสี accent */
+  .check { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+  .check input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--line); background: #fff; cursor: pointer; flex-shrink: 0; margin-top: 1px;
+    position: relative; transition: .15s;
+  }
+  .check input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  .check input[type="checkbox"]:checked::after {
+    content: '✓'; color: #fff; font-size: 14px; font-weight: 700;
+    position: absolute; inset: 0; display: grid; place-items: center;
+  }
+  .check input[type="checkbox"]:disabled { opacity: .5; cursor: default; }
+  .check.done label { color: var(--muted); text-decoration: line-through; }
+  .check label { flex: 1; }
+
+  .agehead { font-size: 14px; font-weight: 700; color: var(--accent-dark); padding: 12px 0 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .agehead.current > span:first-child::after { content: ' ●'; color: var(--accent); font-size: 11px; }
+  .ms-count { font-size: 11.5px; font-weight: 600; color: var(--muted); background: var(--bg); padding: 2px 10px; border-radius: 999px; }
+  .ms-count.ok { background: var(--ok-soft); color: var(--ok); }
+
+  .seg { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px; }
+  .seg button {
+    border: 1px solid var(--line); background: var(--card); padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; color: var(--muted); cursor: pointer; font-family: var(--font-b);
+    font-weight: 500; white-space: nowrap; flex-shrink: 0;
+  }
+  .seg button.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+  .tabpill {
+    border: 1px solid var(--line); background: var(--card); padding: 7px 14px; border-radius: 999px;
+    font-size: 12.5px; color: var(--muted); cursor: pointer; font-family: var(--font-b);
+    font-weight: 500; white-space: nowrap; flex-shrink: 0;
+  }
+  .tabpill.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+
+  /* โปรไฟล์ลูก */
+  .child-item { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; margin-bottom: 10px; background: var(--bg); }
+  .child-item:last-child { margin-bottom: 0; }
+  .child-top { display: flex; align-items: center; gap: 10px; }
+  .child-top .grow { flex: 1; min-width: 0; }
+  .child-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 12.5px; color: var(--muted); }
+  .child-meta span { white-space: nowrap; }
+
+  /* สมาชิกครอบครัว — ชื่อบรรทัดบน ปุ่มควบคุมบรรทัดล่าง */
+  .member { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .member:last-child { border-bottom: none; }
+  .member-top { display: flex; align-items: center; gap: 10px; }
+  .member-top .grow { flex: 1; min-width: 0; }
+  .member-ctrls { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-left: 50px; }
+  .member-ctrls .role-select { flex: 1; }
+  .member-ctrls .role-select select { width: 100%; }
+
+  /* dropdown สิทธิ์สมาชิก */
+  .role-select { position: relative; flex-shrink: 0; }
+  .role-select select {
+    appearance: none; -webkit-appearance: none; font-family: var(--font-b);
+    font-size: 12.5px; font-weight: 600; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 30px 8px 14px; cursor: pointer;
+  }
+  .role-select::after { content: '▾'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 12px; }
+
+  /* สินค้าน่าซื้อ */
+  .prod-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .prod { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .prod-img { height: 100px; width: 100%; object-fit: cover; display: block; background: var(--bg); }
+  .prod-ph { height: 100px; width: 100%; display: grid; place-items: center; font-size: 34px; background: var(--bg); }
+  .prod-body { padding: 10px 12px 12px; }
+  .prod-title { font-size: 13px; font-weight: 500; line-height: 1.35; max-height: 2.7em; overflow: hidden; word-break: break-word; }
+  .prod-price { font-weight: 700; font-size: 15px; color: var(--ink); margin-top: 6px; }
+  .prod-buys { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .prod-buy { display: block; text-align: center; padding: 7px; font-size: 11.5px; font-weight: 700; border-radius: 999px; text-decoration: none; }
+  .prod-buy.plat-shopee { background: #ffede5; color: #ee4d2d; }
+  .prod-buy.plat-tiktok { background: #ededed; color: #111; }
+  .prod-buy.plat-lazada { background: #e8eaff; color: #2e3192; }
+  .prod-tools { display: flex; gap: 6px; margin-top: 8px; }
+  .prod-tools button { flex: 1; }
+
+  /* มุมประโยชน์ผู้ปกครอง */
+  .benefit-hero {
+    background: var(--accent-soft); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 20px; text-align: center; margin-bottom: 12px;
+  }
+  .benefit-amt { font-size: 30px; font-weight: 700; color: var(--accent-dark); line-height: 1.1; }
+  .benefit-amt span { font-size: 15px; font-weight: 600; opacity: .8; }
+  .benefit-sub { font-size: 13px; color: var(--ink); opacity: .75; margin-top: 8px; line-height: 1.6; }
+  .benefit-row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  .benefit-row:last-child { border-bottom: none; }
+  .benefit-row span { color: var(--muted); flex-shrink: 0; min-width: 110px; }
+  .benefit-row b { flex: 1; font-weight: 600; }
+  .step { display: flex; gap: 12px; padding: 9px 0; align-items: flex-start; font-size: 13.5px; line-height: 1.6; }
+  .step-n {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: grid; place-items: center; font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+
+  /* ประกัน */
+  .ins-item { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 12px; margin-bottom: 10px; background: var(--bg); }
+  .ins-item:last-child { margin-bottom: 0; }
+  .ins-top { display: flex; align-items: center; gap: 10px; }
+  .ins-top .grow { flex: 1; min-width: 0; }
+  .ins-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); align-items: center; font-size: 12.5px; color: var(--muted); }
+  .ins-meta span { flex: 1; min-width: 120px; }
+  .ins-btn { background: var(--accent-soft); color: var(--accent-dark); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .ins-tools { display: flex; gap: 6px; margin-top: 10px; }
+  .ins-tools button { flex: 1; }
+
+  /* ค่าใช้จ่าย — ซ้ายเลือกเดือน ขวารวมทั้งปี */
+  .month-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; padding: 0 2px; }
+  .month-picker { display: flex; align-items: center; gap: 8px; }
+  .month-label { font-weight: 700; font-size: 15px; min-width: 74px; text-align: center; }
+  .year-total { text-align: right; line-height: 1.3; }
+  .year-total small { display: block; color: var(--muted); font-size: 11px; font-weight: 600; }
+  .year-total b { font-size: 15px; color: var(--ink); }
+  .bar { height: 5px; background: var(--line); border-radius: 999px; margin-top: 6px; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+
+  #modal { position: fixed; inset: 0; background: rgba(30, 30, 40, .4); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+  #modalBox { background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 20px 26px; width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto; animation: slideup .3s cubic-bezier(.2, .8, .2, 1); position: relative; }
+  #modalBox::before { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; background: var(--line); border-radius: 999px; }
+  @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
+  #modalBox h3 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 12px;
+    font-size: 15px; font-family: var(--font-b); background: #fff; color: var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+  .form-sep { font-size: 13px; font-weight: 700; color: var(--ink); margin: 6px 0 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .modal-actions .btn { flex: 1; }
+
+  #toast { position: fixed; bottom: 92px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 999px; font-size: 14px; z-index: 60; max-width: 90%; }
+  .hidden { display: none !important; }
+  .loading { text-align: center; color: var(--muted); padding: 40px 0; }
+  .empty { text-align: center; color: var(--muted); padding: 24px 0; font-size: 14px; }
+  /* อัลบั้มความทรงจำ */
+  .mem-album { padding: 14px; }
+  .mem-head { display: flex; align-items: flex-start; gap: 10px; }
+  .mem-head .grow { flex: 1; min-width: 0; }
+  .mem-detail { font-size: 13px; color: var(--ink); opacity: .85; display: block; margin-top: 4px; line-height: 1.55; }
+  .mem-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+  .mem-photos a { display: block; border-radius: 10px; overflow: hidden; aspect-ratio: 1; background: var(--bg); border: 1px solid var(--line); }
+  .mem-photos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mem-photos .mem-video { display: grid; place-items: center; font-size: 30px; text-decoration: none; }
+  canvas { max-width: 100%; }
+  pre.routine { white-space: pre-wrap; font-family: var(--font-b); font-size: 14px; line-height: 1.7; color: var(--ink); }
+
+  /* ป้ายอายุ + เพศ ในโปรไฟล์ ตามเพศ (ช=ฟ้า ญ=ชมพู) */
+  .badge.b-boy { background: #e7f2fa; color: #4f93c4; }
+  .badge.b-girl { background: #fceaf2; color: #d76d9c; }
+  .gcol-boy { color: #4f93c4; }
+  .gcol-girl { color: #d76d9c; }
+
+  /* ตัวเลื่อนดูบันทึกย้อนหลัง */
+  .daylog-nav { display: inline-flex; align-items: center; gap: 8px; }
+  .daylog-label { font-size: 12.5px; font-weight: 700; color: var(--accent-dark); min-width: 56px; text-align: center; }
+
+  /* หัว section ในมุมประโยชน์ + ลิงก์ inline */
+  .bsec-head { font-size: 15px; font-weight: 700; color: var(--ink); margin: 24px 4px 10px; padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+  .bsec-head.first { margin-top: 4px; }
+  .inline-link { color: var(--accent-dark); font-size: 13px; font-weight: 600; text-decoration: underline; }
+  /* แถวสิทธิแบบ 2 คอลัมน์เท่ากัน — หัวข้อหนา เนื้อหาบาง */
+  .benefit-row.eq span { flex: 1; min-width: 0; font-weight: 700; color: var(--ink); }
+  .benefit-row.eq b { flex: 1; font-weight: 400; color: var(--ink); }
+
+  /* มือถือ: ปุ่มติดต่อตัวแทน/ดูกรมธรรม์ ขึ้นบรรทัดใหม่เต็มความกว้าง */
+  @media (max-width: 480px) {
+    .ins-meta { flex-direction: column; align-items: stretch; }
+    .ins-meta span { min-width: 0; }
+    .ins-meta .ins-btn { text-align: center; }
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <select id="childSelect" onchange="switchChild(this.value)"></select>
+      <span id="childAge"></span>
+    </header>
+    <main id="content">
+      <div class="loading">กำลังโหลด...</div>
+    </main>
+    <nav id="tabbar">
+      <button data-page="home" class="active" onclick="go('home')">🏠<span>หน้าหลัก</span></button>
+      <button data-page="health" onclick="go('health')">💉<span>สุขภาพ</span></button>
+      <button data-page="develop" onclick="go('develop')">🧩<span>พัฒนาการ</span></button>
+      <button data-page="stuff" onclick="go('stuff')">📦<span>ของ/เงิน</span></button>
+      <button data-page="more" onclick="go('more')">⚙️<span>อื่นๆ</span></button>
+    </nav>
+  </div>
+  <div id="modal" class="hidden" onclick="if(event.target===this)closeModal()">
+    <div id="modalBox"></div>
+  </div>
+  <div id="toast" class="hidden"></div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>
+    /* config มาจาก URL query — ตั้งใน LIFF Endpoint URL ต่อลูกค้า
+       เช่น https://USER.github.io/babytracker/?liff=LIFFID&api=GAS_EXEC_URL&app=ชื่อแอป */
+    var _p = new URLSearchParams(location.search);
+    var LIFF_ID = _p.get('liff') || '';
+    var WEB_APP_URL = _p.get('api') || '';
+    var APP_NAME = _p.get('app') || 'นับนับ';
+  </script>
+<script>
+/* ---------- state & helpers ---------- */
+/* ชื่อแอป (white-label) — ตั้งจาก Script Property APP_NAME ผ่าน web/Index; ถ้าไม่ได้ตั้ง (เช่น พรีวิว) ใช้ค่าเริ่มต้น */
+var APP_NAME = (typeof APP_NAME !== 'undefined' && APP_NAME) ? APP_NAME : 'นับนับ';
+var S = { userId: null, user: null, children: [], child: null, refs: null, page: 'home', charts: [], msOpen: {} };
+
+/* ---------- i18n (TH / EN) ---------- */
+var LANG = localStorage.getItem('bt_lang') || 'th';
+var I18N = {
+  th: {
+    nav_home: 'หน้าหลัก', nav_health: 'สุขภาพ', nav_develop: 'พัฒนาการ', nav_stuff: 'ของ/เงิน', nav_more: 'อื่นๆ',
+    edit: 'แก้ไข', del: 'ลบ', add: 'เพิ่ม', save: 'บันทึก', cancel: 'ยกเลิก', close: 'ปิด',
+    loading: 'กำลังโหลด...', none: 'ยังไม่มีข้อมูล',
+    login_sub: 'แอปบันทึกลูกน้อย — เข้าสู่ระบบเพื่อดูข้อมูล', email: 'อีเมล', password: 'รหัสผ่าน', login: 'เข้าสู่ระบบ', logging_in: 'กำลังเข้าสู่ระบบ...',
+    login_hint: 'หรือเปิดผ่านเมนูในแชท LINE OA เพื่อเข้าอัตโนมัติ<br>สมาชิกใหม่: เพิ่มเพื่อน LINE OA แล้วตั้งรหัสผ่านที่เมนูตั้งค่า',
+    born: 'เกิด', h_height: 'สูง', h_weight: 'หนัก', h_head: 'รอบหัว', h_blood: 'กรุ๊ป', h_dev: 'พัฒนาการ',
+    age_y: 'ปี', age_mo: 'เดือน', age_d: 'วัน',
+    today: 'วันนี้', cutoff: 'ตัดรอบ 06:00 น.', quicklog: 'บันทึกด่วน', alerts: 'แจ้งเตือน', watch_today: 'เหตุการณ์เฝ้าระวังวันนี้', log: 'บันทึก',
+    no_log: 'ไม่มีบันทึกวันนี้',
+    q_bmilk: 'นมแม่', q_fmilk: 'นมผง', q_water: 'น้ำ', q_food: 'อาหาร', q_poop: 'อึ', q_pee: 'ฉี่', q_med: 'ยา', q_sleep: 'นอน', q_wake: 'ตื่น', q_bath: 'อาบน้ำ', q_event: 'เหตุการณ์',
+    st_milk: 'นม', st_times: 'ครั้ง', st_meals: 'มื้ออาหาร', st_sleep: 'นอนวันนี้', st_hr: 'ชม.', st_ml: 'มล.', st_oz: 'ออนซ์',
+    unit_cm: 'ซม.', unit_kg: 'กก.', water_lbl: 'น้ำ', meals_lbl: 'มื้ออาหาร', poop_lbl: 'อึ (ครั้ง)', pee_lbl: 'ฉี่ (ครั้ง)',
+    appt: 'นัดพบแพทย์', vaccine: 'วัคซีน', growth: 'การเจริญเติบโต', basic_health: 'ข้อมูลสุขภาพพื้นฐาน', health_log: 'บันทึกสุขภาพ (รายการ)',
+    pdf_btn: '📄 สร้างรายงานสรุป 7 วัน (PDF) สำหรับพบแพทย์',
+    g_weight: 'น้ำหนัก (กก.)', g_height: 'ส่วนสูง (ซม.)', g_head: 'รอบหัว (ซม.)', g_teeth: '🦷 ฟัน (ซี่)', g_shirt: 'ไซส์เสื้อ', g_shoe: 'ไซส์รองเท้า',
+    chart_w: 'กราฟน้ำหนักเทียบเกณฑ์ WHO', chart_h: 'กราฟส่วนสูงเทียบเกณฑ์ WHO', add_appt: 'เพิ่มนัด', add_vaccine: 'เพิ่มเอง',
+    bh_allergy: 'แพ้อาหาร/ยา', bh_disease: 'โรคประจำตัว', bh_blood: 'กรุ๊ปเลือด', no_info: 'ไม่มีข้อมูล',
+    bh_note: 'ข้อมูลนี้อยู่ในโปรไฟล์ลูก (แก้ที่ตั้งค่า) — เป็นข้อมูลถาวร ไม่ใช่รายการรายวัน',
+    vac_buy: 'ซื้อเพิ่ม', vac_done: '✓ แล้ว', vac_given: 'ฉีดแล้ว', vac_mark: 'บันทึกฉีด', vac_wait: 'รอ',
+    vac_note: 'แผนหลักอ้างอิง EPI กรมควบคุมโรค — วัคซีนเสริม (เช่น IPD, ไข้หวัดใหญ่, สุกใส) กด "＋ เพิ่มเอง" แล้วเลือก "ซื้อเพิ่ม"',
+    appt_none: 'ยังไม่มีนัด — เพิ่มนัดตรวจ/ฉีดวัคซีน แล้วเตือนผ่าน LINE ล่วงหน้าได้',
+    appt_note: 'แจ้งเตือนส่งเข้า LINE ตามที่ตั้งไว้ (ตั้งค่าที่ อื่นๆ) — ใช้ได้ทั้งนัดตรวจและวัคซีน',
+    gender_boy: 'เด็กชาย', gender_girl: 'เด็กหญิง',
+    chart_axis_age: 'อายุ (เดือน)', chart_leg_band: 'ช่วงเกณฑ์ปกติ (P3–P97)', chart_leg_p50: 'P50 (ค่ากลาง)',
+    gg_title: 'ℹ️ วิธีอ่านกราฟ (P3 / P50 / P97)',
+    gg_p1: 'เปอร์เซ็นไทล์ = เทียบลูกกับเด็กเพศเดียวกัน วัยเดียวกัน 100 คน เรียงจากตัวเล็กสุดไปใหญ่สุด',
+    gg_band: '<b>แถบสีเทา</b> = ช่วงเกณฑ์ปกติ (P3 ถึง P97) — เด็ก 94% อยู่ในช่วงนี้',
+    gg_p50: '<b>เส้นประกลางแถบ</b> = P50 (ค่ากลาง) เด็กครึ่งหนึ่งตัวเล็กกว่า อีกครึ่งตัวใหญ่กว่า',
+    gg_line: '<b>เส้นสี {name}</b> = ค่าจริงของลูกที่บันทึกไว้',
+    gg_ok: '✅ จุดของลูกอยู่ในแถบสีเทา และวิ่งขนานไปกับแถบ = เติบโตตามเกณฑ์ (ไม่จำเป็นต้องอยู่กลางพอดี)',
+    gg_warn: '⚠️ หากเส้นของลูกดิ่งลงหรือพุ่งขึ้นออกนอกแถบเร็วผิดปกติ ควรปรึกษากุมารแพทย์',
+    gg_gender: '👶 กราฟนี้ใช้เกณฑ์ของ<b> {gender}</b> โดยเฉพาะ — เกณฑ์น้ำหนัก/ส่วนสูงของเด็กชายและเด็กหญิงต่างกัน ระบบเลือกให้อัตโนมัติตามเพศในโปรไฟล์',
+    gg_source: 'แหล่งที่มา: WHO Child Growth Standards องค์การอนามัยโลก ({url}) — ค่าในระบบเป็นค่าประมาณเพื่อดูแนวโน้ม การประเมินจริงยึดสมุดสุขภาพแม่และเด็ก (เล่มชมพู) และกุมารแพทย์เป็นหลัก',
+    hlog_none: 'ยังไม่มีรายการ เช่น วันที่ป่วย ทำฟัน ตรวจสุขภาพ',
+    pdf_generating: 'กำลังสร้างรายงาน... ⏳', pdf_done: 'สร้างรายงานแล้ว 📄',
+    ht_illness: '🤒 เจ็บป่วย', ht_allergy: '🚫 แพ้', ht_dental: '🦷 ฟัน', ht_checkup: '🩺 ตรวจสุขภาพ', ht_other: '📌 อื่นๆ',
+    seg_check: 'เช็คลิสต์', seg_activity: 'กิจกรรม', seg_school: 'เตรียมเข้าเรียน',
+    newborn: 'แรกเกิด', ms_done: '✓ ครบ',
+    dom_gm: 'กล้ามเนื้อมัดใหญ่', dom_fm: 'กล้ามเนื้อมัดเล็ก', dom_rl: 'เข้าใจภาษา', dom_el: 'การใช้ภาษา', dom_ps: 'สังคม/ช่วยตัวเอง',
+    ms_note: 'เช็คลิสต์ครอบคลุมช่วง 0-3 ปี — ช่วงที่ทำได้ครบจะหุบอัตโนมัติ (แตะหัวข้อเพื่อเปิด/ปิด)<br>แหล่งที่มา: คู่มือเฝ้าระวังและส่งเสริมพัฒนาการเด็กปฐมวัย (DSPM) กรมอนามัย',
+    tab_stock: 'สต๊อก', tab_wish: 'น่าซื้อ', tab_expense: 'ค่าใช้จ่าย', tab_saving: 'เงินเก็บ', tab_benefit: 'สิทธิผู้ปกครอง',
+    more_memory: 'ทรงจำ', more_routine: 'ตาราง/เมนู', more_school: 'โรงเรียน', more_setting: 'ตั้งค่า',
+    profile: 'โปรไฟล์ลูก', add_child: 'เพิ่มลูก', login_sec: 'การเข้าสู่ระบบ', logout: 'ออกจากระบบ',
+    set_lang: 'ภาษา / Language', members: 'สมาชิกครอบครัว',
+    set_retention: 'เก็บบันทึกรายวันย้อนหลัง', set_remind: 'แจ้งเตือนผ่าน LINE',
+    appt_default: 'ตรวจตามนัด', a_place_sep: ' · ', hide_today: 'ซ่อนวันนี้',
+    due_on: 'กำหนด', overdue: 'เลยกำหนด', in_n_days: 'อีก {n} วัน', lowstock_sub: 'ของใช้ใกล้หมด ควรซื้อเพิ่ม',
+    remaining: 'เหลือ', unit_piece: 'ชิ้น',
+    retention_hint: 'เก็บบันทึก กิน/นอน/ขับถ่าย ไว้กี่วันล่าสุด — เกินกว่านี้ระบบจะลบทิ้งอัตโนมัติ (ช่วยให้แอปโหลดเร็ว)',
+    days_unit: 'วัน', remind_lead: 'แจ้งเตือนล่วงหน้ากี่วัน', before_n_days: 'ก่อน {n} วัน', remind_time: 'เวลาส่งแจ้งเตือน',
+    remind_funcs: 'ฟังก์ชันที่แจ้งเตือนผ่าน LINE:', rf_appt: 'นัดพบแพทย์ (ตามที่ตั้งในแต่ละนัด)', rf_vaccine: 'วัคซีนถึงกำหนดฉีด',
+    rf_stock: 'ของใช้ใกล้หมด', rf_insurance: 'ประกันครบกำหนดต่ออายุ', rf_homework: 'การบ้านครบกำหนด (เย็นวันก่อน)',
+    role_admin: 'จัดการทุกอย่าง', role_editor: 'แก้ไขได้', role_logger: 'บันทึกรายวัน', role_viewer: 'ดูอย่างเดียว', role_pending: 'รออนุมัติ',
+    you: 'คุณ', set_pass: 'ตั้งรหัส', change_pass: 'เปลี่ยนรหัส', pass_short: 'รหัส', no_email_hint: 'ยังไม่ได้ตั้งอีเมล — เข้าได้เฉพาะผ่าน LINE',
+    login_note: 'ตั้งอีเมล+รหัสผ่านไว้ เพื่อเปิดจากเบราว์เซอร์ปกตินอก LINE ได้',
+    members_note: 'จัดการทุกอย่าง (admin) • แก้ไขได้ (พ่อแม่) • บันทึกรายวัน (พี่เลี้ยง) • ดูอย่างเดียว (ปู่ย่า) • "รหัส" = ตั้งรหัสผ่าน • "ลบ" = เอาสมาชิกออก',
+    renew_overdue: "เลยกำหนด {n} วัน", renew_today: "ต่ออายุวันนี้", renew_in: "ต่ออายุอีก {n} วัน",
+    sm_wake: "ช่วงตื่น", sm_milk: "นม", sm_meals: "มื้ออาหาร",
+    sample_menu_lbl: "ตัวอย่างเมนู:",
+    src_sleep: "แหล่งที่มา: แนวทางการนอนของเด็กตามวัย (AAP / กรมอนามัย) — เป็นแนวทางทั่วไป ปรับตามจังหวะของลูกแต่ละคน",
+    src_menu: "แหล่งที่มา: คำแนะนำอาหารตามวัยสำหรับทารกและเด็กเล็ก สำนักโภชนาการ กรมอนามัย — หากมีประวัติแพ้อาหาร ปรึกษาแพทย์ก่อนเริ่มอาหารใหม่",
+    act_note: "คลังกิจกรรมครอบคลุมช่วง 0-3 ปี (ช่วงทองของพัฒนาการ)<br>แหล่งที่มา: คู่มือส่งเสริมพัฒนาการเด็ก (DSPM) กรมอนามัย · แนวคิดเล่นตามวัย/Play-based learning",
+    prep_note: "รายการมาตรฐานเป็นค่าเริ่มต้น — บางโรงเรียนขอเอกสาร/เตรียมเพิ่ม กด \"＋ เพิ่มเอง\" ได้", fl_ingredients: "ส่วนประสม", ph_ingredients: "เช่น ข้าว, ไข่, ตำลึง, น้ำมันรำข้าว", ing_lbl: "ส่วนประสม: ", std_age: "มาตรฐานตามวัย",
+    // log names + misc
+    ln_wake: "ตื่นนอน", ln_sleep: "เข้านอน", ln_nap: "งีบ", ln_bath: "อาบน้ำ", ln_milk: "นม", ln_water: "น้ำ", ln_food: "อาหาร", ln_pee: "ฉี่", ln_poop: "อึ", ln_med: "ยา", ln_note: "เหตุการณ์เฝ้าระวัง", by_sep: " น. · ", ms_checked: "ติ๊กแล้ว ✅", ms_unchecked: "เอาออกแล้ว", tst_edited: "แก้ไขแล้ว ✅", tst_child_added: "เพิ่มลูกแล้ว 🎉 สร้างแผนวัคซีนให้อัตโนมัติ", tst_wish_added: "เพิ่มสินค้าแล้ว 🛍", tst_ins_added: "เพิ่มประกันแล้ว 🛡", official_web: "เว็บทางการ: ",
+    // render chrome
+    r_stock: "สต๊อกของใช้", r_wish: "สินค้าน่าซื้อ", r_must_buy: "รายการต้องซื้อ", r_expense_sum: "รวม", r_saving: "เงินเก็บ / กองทุน", r_insurance: "ประกันของลูก", r_memory: "อัลบั้มความทรงจำ", r_meal_week: "ตารางมื้ออาหารรายสัปดาห์", r_fav_food: "อาหารที่ชอบ/ไม่ชอบ", r_meal_age: "อาหารช่วงวัย", r_our_sched: "ตารางของเรา", r_sched_age: "ตารางแนะนำตามวัย", r_school: "โรงเรียน", r_homework: "การบ้านค้าง", r_prep: "เตรียมเข้าอนุบาล", r_act_reco: "กิจกรรมแนะนำสำหรับวัยนี้", r_act_other: "กิจกรรมช่วงวัยอื่น", r_steps: "ขั้นตอนสำคัญ", r_list: "รายการ", r_tax: "ลดหย่อนภาษีบุตร", r_birth_rights: "ค่าคลอด & สิทธิรักษา", e_no_fav: "ยังไม่มีข้อมูล — บันทึกว่าลูกชอบ/ไม่ชอบ/แพ้อาหารอะไร", e_no_school: "ยังไม่มีข้อมูลโรงเรียน", e_no_sched: "ยังไม่มีตารางของบ้านเรา<br><small>สร้างกิจวัตรของลูกเอง เช่น 07:00 ตื่น+นม, 12:00 ข้าวกลางวัน</small>", e_no_insurance: "ยังไม่มีประกัน<br><small>เพิ่มได้หลายแพ็กเกจ พร้อมเบอร์ตัวแทนและลิงก์กรมธรรม์</small>", e_no_product: "ยังไม่มีสินค้า", e_no_product_cat: "ยังไม่มีสินค้าในหมวดนี้<br><small>วางลิงก์ Shopee / TikTok / Lazada ได้เลย ระบบจำแนก platform ให้อัตโนมัติ</small>", e_no_album: "ยังไม่มีอัลบั้ม เริ่มเก็บโมเมนต์แรกกันเลย!", e_no_saving: "ยังไม่มีเงินเก็บ/กองทุน", e_add_child_first_s: "เพิ่มโปรไฟล์ลูกก่อน (แท็บตั้งค่า)", e_add_child_first: "เพิ่มโปรไฟล์ลูกก่อน", e_no_homework: "ไม่มีการบ้านค้าง 🎉", e_no_age_data: "ไม่มีข้อมูลช่วงวัยนี้", e_no_expense: "ไม่มีค่าใช้จ่ายเดือนนี้", e_no_item: "ไม่มีรายการ", e_no_child_opt: "ยังไม่มีข้อมูลลูก", undefined_menu: "— ยังไม่กำหนด —", near_out: "ใกล้หมด", lbl_optional: "เพิ่มเอง", btn_done_hw: "เสร็จ", nap_day: "งีบกลางวัน", sleep_night: "นอนกลางคืน", total_day: "รวมทั้งวัน", lbl_teacher: "ครู: ", lbl_coverage: "คุ้มครอง: ", lbl_premium: "เบี้ย ", lbl_renew: "ครบกำหนดต่ออายุ ", lbl_submit_hw: "ส่ง ", lbl_recommend: " • แนะนำ: ", lbl_contact: " • ติดต่อ: ", link_policy: "📄 ดูกรมธรรม์", link_call_agent: "📞 โทรตัวแทน", year_total: "รวมทั้งปี", nc_title: "ยังไม่มีข้อมูลลูก 👶", nc_sub: "ไปที่แท็บ \"อื่นๆ\" เพื่อเพิ่มโปรไฟล์ลูกคนแรกก่อนครับ", add_album: "เพิ่มอัลบั้ม", add_slot: "เพิ่มช่วงเวลา",
+    // form titles
+    ft_poop: "💩 บันทึกอึ", ft_growth: "บันทึกการเติบโต", ft_vac_given: "บันทึกการฉีดวัคซีน", ft_vac_add: "เพิ่มวัคซีน", ft_health_edit: "แก้ไขบันทึกสุขภาพ", ft_health_add: "เพิ่มบันทึกสุขภาพ", ft_appt_edit: "แก้ไขนัดพบแพทย์", ft_appt_add: "เพิ่มนัดพบแพทย์", ft_prep_edit: "แก้ไขรายการเตรียม", ft_prep_add: "เพิ่มรายการเตรียมเข้าอนุบาล", ft_wish_edit: "แก้ไขสินค้า", ft_wish_add: "เพิ่มสินค้าน่าซื้อ", ft_stock_add: "เพิ่มสินค้าในสต๊อก", ft_expense_add: "บันทึกค่าใช้จ่าย", ft_saving_add: "เพิ่มเงินเก็บ/กองทุน", ft_balance: "แก้ยอด: ", ft_ins_edit: "แก้ไขประกัน", ft_ins_add: "เพิ่มประกัน", ft_album_edit: "แก้ไขอัลบั้ม", ft_album_add: "เพิ่มอัลบั้มความทรงจำ", ft_slot_edit: "แก้ไขช่วงเวลา", ft_slot_add: "เพิ่มช่วงเวลาในตาราง", ft_food_edit: "แก้ไขอาหาร", ft_food_add: "เพิ่มอาหารที่ชอบ/ไม่ชอบ", ft_school_edit: "แก้ไขข้อมูลโรงเรียน", ft_school_add: "เพิ่มข้อมูลโรงเรียน", ft_hw_edit: "แก้ไขการบ้าน", ft_hw_add: "เพิ่มการบ้าน", ft_cred: "ตั้งอีเมล/รหัสผ่าน", ft_child_edit: "แก้ไขโปรไฟล์", ft_child_add: "เพิ่มลูก", ft_meal: "มื้อ{meal} (วัน{day})",
+    // form labels/placeholders
+    fl_milk_ml: "ปริมาณนม (มล.)", fl_water_ml: "ปริมาณน้ำ (มล.)", fl_menu_eaten: "เมนูที่ทาน", fl_pref_note: "ความชอบ/หมายเหตุ", fl_charac: "ลักษณะ", fl_med_dose: "ชื่อยาและปริมาณ", fl_event: "เหตุการณ์ / อุบัติเหตุ + อาการที่ต้องสังเกต", fl_amount_ml: "ปริมาณ (มล.)", fl_color: "สี", fl_smell: "กลิ่น", fl_date: "วันที่", fl_head_cm: "รอบศีรษะ (ซม.)", fl_teeth: "🦷 จำนวนฟัน (ซี่)", fl_given_date: "วันที่ฉีด", fl_place: "สถานที่", fl_lot: "Lot No. (ถ้ามี)", fl_vaccine_name: "ชื่อวัคซีน", fl_type: "ประเภท", opt_vac_optional: "วัคซีนเสริม / ซื้อเพิ่มเอง", opt_vac_core: "วัคซีนหลัก (ตามแผน)", fl_due_shot: "กำหนดฉีด", fl_note_opt: "หมายเหตุ (ไม่บังคับ)", opt_illness: "เจ็บป่วย", opt_allergy: "แพ้อาหาร/ยา", opt_dental: "ทำฟัน", opt_checkup: "ตรวจสุขภาพ", opt_other: "อื่นๆ", fl_title: "หัวข้อ", fl_detail: "รายละเอียด", fl_subject_appt: "เรื่อง", fl_appt_date: "วันที่นัด", fl_time: "เวลา", fl_remind_lead: "แจ้งเตือนล่วงหน้า (ผ่าน LINE)", opt_same_day: "วันนัดพอดี", opt_b1: "ก่อน 1 วัน", opt_b2: "ก่อน 2 วัน", opt_b3: "ก่อน 3 วัน", opt_b7: "ก่อน 7 วัน", fl_note: "หมายเหตุ", fl_item: "รายการ", fl_product_name: "ชื่อสินค้า", fl_category: "หมวด", fl_img_link_opt: "ลิงก์รูปสินค้า (ไม่บังคับ)", fl_note_size: "โน้ต เช่น ไซส์ / ร้านที่เคยซื้อ", fl_price: "ราคา (บาท)", fl_link_aff: "ลิงก์ (affiliate ได้)", fl_qty_left: "จำนวนคงเหลือ", fl_unit: "หน่วย", fl_min_qty: "แจ้งเตือนเมื่อเหลือ ≤", fl_recommend: "สินค้าแนะนำ/ร้านที่ซื้อประจำ", fl_amount_baht: "จำนวนเงิน (บาท)", fl_name: "ชื่อ", fl_goal: "เป้าหมาย (บาท)", fl_current_amt: "ยอดปัจจุบัน (บาท)", fl_package: "ชื่อแพ็กเกจ/กรมธรรม์", fl_insurer: "บริษัทประกัน", fl_premium: "เบี้ยประกัน/ปี (บาท)", fl_coverage: "ความคุ้มครองโดยย่อ", fl_renew: "วันครบกำหนดต่ออายุ (เตือนผ่าน LINE ล่วงหน้า 14 วัน)", fl_policy_link: "ลิงก์แพ็กเกจ/กรมธรรม์", sep_agent: "👤 ตัวแทน", fl_agent_name: "ชื่อตัวแทน", fl_agent_phone: "เบอร์ติดต่อตัวแทน", fl_note_short: "โน้ต", fl_caption: "คำบรรยาย", fl_add_photos: "เพิ่มรูป (เลือกได้หลายรูป)", fl_media_link: "หรือแปะลิงก์รูป/วิดีโอ (Drive/YouTube)", fl_activity: "กิจกรรม", fl_food_name: "ชื่ออาหาร", fl_preference: "ความชอบ", fl_menu: "เมนู", fl_level: "ระดับ", fl_school_name: "ชื่อโรงเรียน", fl_teacher: "ครูประจำชั้น", fl_contact: "เบอร์/ไลน์ติดต่อ", fl_schedule_note: "ตารางเรียน/หมายเหตุ", fl_homework: "การบ้าน", fl_subject_hw: "วิชา", fl_due: "กำหนดส่ง", fl_pass_min: "รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)", fl_pass_confirm: "ยืนยันรหัสผ่าน", fl_fullname: "ชื่อ-นามสกุล", fl_nickname: "ชื่อเล่น", fl_gender: "เพศ", fl_birthdate: "วันเกิด", fl_blood: "กรุ๊ปเลือด", fl_hospital: "โรงพยาบาลประจำ", fl_doctor: "แพทย์ประจำ", fl_emergency: "เบอร์ฉุกเฉิน", fl_allergy_hist: "ประวัติแพ้ (อาหาร/ยา)", fl_disease: "โรคประจำตัว", ph_menu_eaten: "เช่น ข้าวต้มไก่", ph_pref_note: "เช่น ชอบมาก กินหมด", ph_med_dose: "เช่น พาราเซตามอล 2.5ml", ph_event: "เช่น ล้มหัวฟาดพื้น — สังเกตอาการอาเจียน/ซึม 24-48 ชม. / โดนน้ำร้อนลวกมือ", ph_shirt: "เช่น 80, 2T", ph_shoe: "เช่น 13.5 ซม., US 5", ph_place_hosp: "เช่น รพ.เด็ก", ph_vaccine: "เช่น IPD, ไข้หวัดใหญ่, สุกใส", ph_title_illness: "เช่น เป็นไข้หวัด", ph_subject_appt: "เช่น ตรวจสุขภาพ 18 เดือน, ฉีดวัคซีน", ph_place_bkk: "เช่น รพ.กรุงเทพ", ph_prep_item: "เช่น เตรียมชุดนอนไปโรงเรียน", ph_product_soap: "เช่น สบู่เหลวเด็ก Cetaphil Baby", ph_product_diaper: "เช่น ผ้าอ้อม Merries M", ph_unit: "ชิ้น / แพ็ก / กระป๋อง", ph_recommend: "เช่น Shopee ร้าน xxx", ph_expense_item: "เช่น ผ้าอ้อม 1 ลัง", ph_saving_name: "เช่น กองทุนค่าเทอมมหาลัย", ph_insurer: "เช่น AIA / เมืองไทย", ph_coverage: "เช่น IPD 5 แสน + OPD 3 หมื่น", ph_package: "เช่น ประกันสุขภาพเด็ก Smart Kids", ph_title_mem: "เช่น เที่ยวทะเลครั้งแรก", ph_caption: "เล่าเรื่องราวของวันนั้น...", ph_activity: "เช่น ตื่น+กินนม, งีบเช้า, ข้าวกลางวัน", ph_act_note: "เช่น นม 180 มล.", ph_food: "เช่น ฟักทองบด, กล้วย", ph_meal: "เช่น ข้าวต้มปลา + ผลไม้",
+    // toast/confirm ทั่วไป
+    saved: 'บันทึกแล้ว ✅', added: 'เพิ่มแล้ว ✅', tst_appt: 'บันทึกนัดแล้ว ✅ จะเตือนผ่าน LINE', tst_vaccine: 'เพิ่มวัคซีนแล้ว ✅',
+    tst_album: 'บันทึกอัลบั้มแล้ว 💛', tst_menu: 'บันทึกเมนูแล้ว ✅', tst_hw_done: 'เสร็จแล้ว 🎉', tst_role: 'เปลี่ยนสิทธิ์แล้ว ✅',
+    tst_remind: 'ตั้งค่าแจ้งเตือนแล้ว ✅', tst_member_rm: 'ลบสมาชิกแล้ว ✅', tst_pass_set: 'ตั้งรหัสผ่านแล้ว ✅',
+    tst_retention: 'ตั้งเก็บบันทึก {n} วันล่าสุด ✅', tst_history_limit: 'ดูย้อนหลังได้ {n} วันล่าสุด',
+    tst_uploading: 'กำลังอัปโหลดรูป {i}/{n}...', tst_skip_big: 'ข้าม {name} (เกิน 8MB)',
+    err_vaccine: '❌ กรอกชื่อวัคซีน', err_title_date: '❌ กรอกเรื่องและวันที่', err_item: '❌ กรอกรายการ',
+    err_product: '❌ กรอกชื่อสินค้า', err_package: '❌ กรอกชื่อแพ็กเกจ', err_time_act: '❌ กรอกเวลาและกิจกรรม',
+    err_food: '❌ กรอกชื่ออาหาร', err_pass_match: '❌ รหัสผ่านไม่ตรงกัน',
+    cf_del_log: 'ลบบันทึกนี้?', cf_del_vaccine: 'ลบวัคซีนนี้?', cf_del_item: 'ลบรายการนี้?', cf_del_appt: 'ลบนัดนี้?',
+    cf_del_product: 'ลบสินค้านี้?', cf_del_stock: 'ลบสินค้านี้ออกจากสต๊อก?', cf_del_insurance: 'ลบประกันนี้?',
+    cf_del_album: 'ลบอัลบั้มนี้? (รูปใน Drive ยังอยู่)', cf_del_slot: 'ลบช่วงเวลานี้?', cf_del_school: 'ลบข้อมูลโรงเรียนนี้?',
+    cf_del_homework: 'ลบการบ้านนี้?', cf_del_member: 'ลบสมาชิก "{name}" ออกจากระบบ?\nสมาชิกจะเข้าใช้งานไม่ได้อีก (ต้องขออนุมัติใหม่)'
+  },
+  en: {
+    nav_home: 'Home', nav_health: 'Health', nav_develop: 'Development', nav_stuff: 'Items & Money', nav_more: 'More',
+    edit: 'Edit', del: 'Delete', add: 'Add', save: 'Save', cancel: 'Cancel', close: 'Close',
+    loading: 'Loading...', none: 'No data yet',
+    login_sub: 'Baby tracker — sign in to view your child', email: 'Email', password: 'Password', login: 'Sign in', logging_in: 'Signing in...',
+    login_hint: 'Or open from the LINE OA menu to sign in automatically.<br>New member: add the LINE OA friend, then set a password in Settings.',
+    born: 'Born', h_height: 'Height', h_weight: 'Weight', h_head: 'Head', h_blood: 'Blood', h_dev: 'Milestones',
+    age_y: 'yr', age_mo: 'mo', age_d: 'd',
+    today: 'Today', cutoff: 'resets 06:00', quicklog: 'Quick log', alerts: 'Alerts', watch_today: 'Events to watch today', log: 'Log',
+    no_log: 'No logs',
+    q_bmilk: 'Breast', q_fmilk: 'Formula', q_water: 'Water', q_food: 'Food', q_poop: 'Poop', q_pee: 'Pee', q_med: 'Med', q_sleep: 'Sleep', q_wake: 'Wake', q_bath: 'Bath', q_event: 'Event',
+    st_milk: 'Milk', st_times: 'times', st_meals: 'meals', st_sleep: 'slept today', st_hr: 'hr', st_ml: 'ml', st_oz: 'oz',
+    unit_cm: 'cm', unit_kg: 'kg', water_lbl: 'Water', meals_lbl: 'meals', poop_lbl: 'Poop (times)', pee_lbl: 'Pee (times)',
+    appt: 'Doctor appointments', vaccine: 'Vaccines', growth: 'Growth', basic_health: 'Basic health info', health_log: 'Health records',
+    pdf_btn: '📄 Generate 7-day summary report (PDF) for the doctor',
+    g_weight: 'Weight (kg)', g_height: 'Height (cm)', g_head: 'Head (cm)', g_teeth: '🦷 Teeth', g_shirt: 'Shirt size', g_shoe: 'Shoe size',
+    chart_w: 'Weight vs. WHO standard', chart_h: 'Height vs. WHO standard', add_appt: 'Add', add_vaccine: 'Add manually',
+    bh_allergy: 'Food/drug allergies', bh_disease: 'Chronic conditions', bh_blood: 'Blood group', no_info: 'No data',
+    bh_note: 'This lives in the child profile (edit in Settings) — permanent info, not a daily log.',
+    vac_buy: 'Optional', vac_done: '✓ Done', vac_given: 'Given', vac_mark: 'Mark given', vac_wait: 'Pending',
+    vac_note: 'Core plan follows Thailand EPI (DDC). For optional vaccines (e.g. IPD, flu, chickenpox) tap "＋ Add manually" and choose "Optional".',
+    appt_none: 'No appointments yet — add a checkup/vaccine visit and get a LINE reminder in advance.',
+    appt_note: 'Reminders are sent to LINE as configured (set in More) — works for both checkups and vaccines.',
+    gender_boy: 'boys', gender_girl: 'girls',
+    chart_axis_age: 'Age (months)', chart_leg_band: 'Normal range (P3–P97)', chart_leg_p50: 'P50 (median)',
+    gg_title: 'ℹ️ How to read the chart (P3 / P50 / P97)',
+    gg_p1: 'Percentile = comparing your child with 100 children of the same sex and age, sorted smallest to largest.',
+    gg_band: '<b>Grey band</b> = normal range (P3 to P97) — 94% of children fall here.',
+    gg_p50: '<b>Dashed centre line</b> = P50 (median); half of children are smaller, half larger.',
+    gg_line: '<b>Coloured line ({name})</b> = your child\'s actual recorded values.',
+    gg_ok: '✅ Points inside the grey band running parallel to it = growing on track (need not be exactly centred).',
+    gg_warn: '⚠️ If the line drops or spikes out of the band unusually fast, consult a paediatrician.',
+    gg_gender: '👶 This chart uses standards for <b>{gender}</b> specifically — weight/height norms differ by sex, chosen automatically from the profile.',
+    gg_source: 'Source: WHO Child Growth Standards ({url}) — values here are approximate for trend viewing; actual assessment relies on the maternal-and-child health booklet (pink book) and a paediatrician.',
+    hlog_none: 'No records yet — e.g. sick days, dental, checkups.',
+    pdf_generating: 'Generating report... ⏳', pdf_done: 'Report ready 📄',
+    ht_illness: '🤒 Illness', ht_allergy: '🚫 Allergy', ht_dental: '🦷 Dental', ht_checkup: '🩺 Checkup', ht_other: '📌 Other',
+    seg_check: 'Checklist', seg_activity: 'Activities', seg_school: 'School prep',
+    newborn: 'Newborn', ms_done: '✓ Done',
+    dom_gm: 'Gross motor', dom_fm: 'Fine motor', dom_rl: 'Receptive language', dom_el: 'Expressive language', dom_ps: 'Social / self-help',
+    ms_note: 'Checklist covers ages 0–3 — completed ranges collapse automatically (tap a heading to expand/collapse).<br>Source: DSPM early-childhood development guide, Dept. of Health.',
+    tab_stock: 'Stock', tab_wish: 'Wishlist', tab_expense: 'Expenses', tab_saving: 'Savings', tab_benefit: 'Parent benefits',
+    more_memory: 'Memories', more_routine: 'Schedule/Menu', more_school: 'School', more_setting: 'Settings',
+    profile: 'Child profiles', add_child: 'Add child', login_sec: 'Sign-in', logout: 'Sign out',
+    set_lang: 'Language / ภาษา', members: 'Family members',
+    set_retention: 'Daily log retention', set_remind: 'LINE reminders',
+    appt_default: 'Scheduled visit', a_place_sep: ' · ', hide_today: 'Hide today',
+    due_on: 'Due', overdue: 'Overdue', in_n_days: 'in {n} d', lowstock_sub: 'Running low, buy more soon',
+    remaining: 'Left', unit_piece: 'pcs',
+    retention_hint: 'How many recent days of feed/sleep/diaper logs to keep — older ones are auto-deleted (keeps the app fast).',
+    days_unit: 'days', remind_lead: 'How many days in advance', before_n_days: '{n} days before', remind_time: 'Reminder time',
+    remind_funcs: 'What LINE reminders cover:', rf_appt: 'Doctor appointments (per-appointment lead time)', rf_vaccine: 'Vaccines coming due',
+    rf_stock: 'Items running low', rf_insurance: 'Insurance renewals', rf_homework: 'Homework due (evening before)',
+    role_admin: 'Full access', role_editor: 'Can edit', role_logger: 'Daily logging', role_viewer: 'View only', role_pending: 'Pending',
+    you: 'You', set_pass: 'Set password', change_pass: 'Change password', pass_short: 'Password', no_email_hint: 'No email set — sign in via LINE only',
+    login_note: 'Set an email + password to open from a normal browser outside LINE.',
+    members_note: 'Full access (admin) • Can edit (parents) • Daily logging (nanny) • View only (grandparents) • "Password" = set password • "Delete" = remove member',
+    renew_overdue: "overdue {n} d", renew_today: "renew today", renew_in: "renew in {n} d",
+    sm_wake: "Wake window", sm_milk: "Milk", sm_meals: "Meals",
+    sample_menu_lbl: "Sample menus:",
+    src_sleep: "Source: age-based child sleep guidance (AAP / Dept. of Health) — general guidance; adjust to your own child's rhythm.",
+    src_menu: "Source: age-based feeding guidance for infants and young children, Bureau of Nutrition, Dept. of Health — if there is any allergy history, consult a doctor before introducing new foods.",
+    act_note: "The activity library covers ages 0-3 (the golden window of development).<br>Source: DSPM child development guide, Dept. of Health · age-appropriate / play-based learning",
+    prep_note: "The standard list is a starting point — some schools ask for extra documents or items; tap \"＋ Add manually\".", fl_ingredients: "Ingredients", ph_ingredients: "e.g. rice, egg, spinach, oil", ing_lbl: "Ingredients: ", std_age: "Standard for age",
+    // log names + misc
+    ln_wake: "Wake", ln_sleep: "Sleep", ln_nap: "Nap", ln_bath: "Bath", ln_milk: "Milk", ln_water: "Water", ln_food: "Food", ln_pee: "Pee", ln_poop: "Poop", ln_med: "Medicine", ln_note: "Watch event", by_sep: " · ", ms_checked: "Checked ✅", ms_unchecked: "Unchecked", tst_edited: "Updated ✅", tst_child_added: "Child added 🎉 vaccine plan created automatically", tst_wish_added: "Product added 🛍", tst_ins_added: "Insurance added 🛡", official_web: "Official site: ",
+    // render chrome
+    r_stock: "Supply stock", r_wish: "Wishlist", r_must_buy: "Shopping list", r_expense_sum: "Total", r_saving: "Savings / funds", r_insurance: "Child insurance", r_memory: "Memory albums", r_meal_week: "Weekly meal plan", r_fav_food: "Liked/disliked foods", r_meal_age: "Foods for this age", r_our_sched: "Our schedule", r_sched_age: "Suggested schedule by age", r_school: "School", r_homework: "Pending homework", r_prep: "Pre-school prep", r_act_reco: "Recommended activities for this age", r_act_other: "Activities for other ages", r_steps: "Key steps", r_list: "Items", r_tax: "Child tax deduction", r_birth_rights: "Delivery cost & care rights", e_no_fav: "No data yet — record foods your child likes/dislikes/is allergic to", e_no_school: "No school info yet", e_no_sched: "No home schedule yet<br><small>Create your own routine, e.g. 07:00 wake+milk, 12:00 lunch</small>", e_no_insurance: "No insurance yet<br><small>Add multiple packages with agent phone and policy links</small>", e_no_product: "No products yet", e_no_product_cat: "No products in this category<br><small>Paste Shopee / TikTok / Lazada links — the platform is detected automatically</small>", e_no_album: "No albums yet — start capturing your first moments!", e_no_saving: "No savings/funds yet", e_add_child_first_s: "Add a child profile first (Settings tab)", e_add_child_first: "Add a child profile first", e_no_homework: "No pending homework 🎉", e_no_age_data: "No data for this age", e_no_expense: "No expenses this month", e_no_item: "No items", e_no_child_opt: "No child yet", undefined_menu: "— not set —", near_out: "Low", lbl_optional: "Optional", btn_done_hw: "Done", nap_day: "Daytime naps", sleep_night: "Night sleep", total_day: "Daily total", lbl_teacher: "Teacher: ", lbl_coverage: "Coverage: ", lbl_premium: "Premium ", lbl_renew: "Renews ", lbl_submit_hw: "Due ", lbl_recommend: " • Rec: ", lbl_contact: " • Contact: ", link_policy: "📄 View policy", link_call_agent: "📞 Call agent", year_total: "Year total", nc_title: "No child yet 👶", nc_sub: "Go to the \"More\" tab to add your first child profile.", add_album: "Add album", add_slot: "Add slot",
+    // form titles
+    ft_poop: "💩 Log poop", ft_growth: "Log growth", ft_vac_given: "Log vaccination", ft_vac_add: "Add vaccine", ft_health_edit: "Edit health record", ft_health_add: "Add health record", ft_appt_edit: "Edit appointment", ft_appt_add: "Add appointment", ft_prep_edit: "Edit prep item", ft_prep_add: "Add pre-school prep item", ft_wish_edit: "Edit product", ft_wish_add: "Add wishlist product", ft_stock_add: "Add stock item", ft_expense_add: "Log expense", ft_saving_add: "Add savings / fund", ft_balance: "Update balance: ", ft_ins_edit: "Edit insurance", ft_ins_add: "Add insurance", ft_album_edit: "Edit album", ft_album_add: "Add memory album", ft_slot_edit: "Edit time slot", ft_slot_add: "Add schedule slot", ft_food_edit: "Edit food", ft_food_add: "Add liked/disliked food", ft_school_edit: "Edit school info", ft_school_add: "Add school info", ft_hw_edit: "Edit homework", ft_hw_add: "Add homework", ft_cred: "Set email / password", ft_child_edit: "Edit profile", ft_child_add: "Add child", ft_meal: "{meal} meal ({day})",
+    // form labels/placeholders
+    fl_milk_ml: "Milk amount (ml)", fl_water_ml: "Water amount (ml)", fl_menu_eaten: "Menu eaten", fl_pref_note: "Preference / note", fl_charac: "Type/appearance", fl_med_dose: "Medicine & dose", fl_event: "Event / accident + symptoms to watch", fl_amount_ml: "Amount (ml)", fl_color: "Colour", fl_smell: "Smell", fl_date: "Date", fl_head_cm: "Head circumference (cm)", fl_teeth: "🦷 Teeth (count)", fl_given_date: "Date given", fl_place: "Place", fl_lot: "Lot No. (if any)", fl_vaccine_name: "Vaccine name", fl_type: "Type", opt_vac_optional: "Optional / self-purchased", opt_vac_core: "Core (scheduled)", fl_due_shot: "Due date", fl_note_opt: "Note (optional)", opt_illness: "Illness", opt_allergy: "Food/drug allergy", opt_dental: "Dental", opt_checkup: "Checkup", opt_other: "Other", fl_title: "Title", fl_detail: "Details", fl_subject_appt: "Subject", fl_appt_date: "Appointment date", fl_time: "Time", fl_remind_lead: "Reminder lead time (via LINE)", opt_same_day: "On the day", opt_b1: "1 day before", opt_b2: "2 days before", opt_b3: "3 days before", opt_b7: "7 days before", fl_note: "Note", fl_item: "Item", fl_product_name: "Product name", fl_category: "Category", fl_img_link_opt: "Product image link (optional)", fl_note_size: "Note e.g. size / shop", fl_price: "Price (THB)", fl_link_aff: "Link (affiliate ok)", fl_qty_left: "Quantity left", fl_unit: "Unit", fl_min_qty: "Alert when ≤", fl_recommend: "Recommended item / usual shop", fl_amount_baht: "Amount (THB)", fl_name: "Name", fl_goal: "Goal (THB)", fl_current_amt: "Current amount (THB)", fl_package: "Package / policy name", fl_insurer: "Insurer", fl_premium: "Premium / year (THB)", fl_coverage: "Coverage summary", fl_renew: "Renewal date (LINE reminder 14 days ahead)", fl_policy_link: "Package / policy link", sep_agent: "👤 Agent", fl_agent_name: "Agent name", fl_agent_phone: "Agent phone", fl_note_short: "Note", fl_caption: "Caption", fl_add_photos: "Add photos (multiple)", fl_media_link: "Or paste an image/video link (Drive/YouTube)", fl_activity: "Activity", fl_food_name: "Food name", fl_preference: "Preference", fl_menu: "Menu", fl_level: "Level", fl_school_name: "School name", fl_teacher: "Class teacher", fl_contact: "Phone / LINE contact", fl_schedule_note: "Schedule / note", fl_homework: "Homework", fl_subject_hw: "Subject", fl_due: "Due date", fl_pass_min: "Password (min 6 chars)", fl_pass_confirm: "Confirm password", fl_fullname: "Full name", fl_nickname: "Nickname", fl_gender: "Gender", fl_birthdate: "Birthdate", fl_blood: "Blood group", fl_hospital: "Primary hospital", fl_doctor: "Primary doctor", fl_emergency: "Emergency contact", fl_allergy_hist: "Allergy history (food/drug)", fl_disease: "Chronic conditions", ph_menu_eaten: "e.g. chicken congee", ph_pref_note: "e.g. loved it, ate all", ph_med_dose: "e.g. paracetamol 2.5ml", ph_event: "e.g. fell and hit head — watch for vomiting/drowsiness 24-48h / scalded hand", ph_shirt: "e.g. 80, 2T", ph_shoe: "e.g. 13.5 cm, US 5", ph_place_hosp: "e.g. Children's Hosp.", ph_vaccine: "e.g. IPD, flu, chickenpox", ph_title_illness: "e.g. caught a cold", ph_subject_appt: "e.g. 18-month checkup, vaccination", ph_place_bkk: "e.g. Bangkok Hospital", ph_prep_item: "e.g. pack pyjamas for school", ph_product_soap: "e.g. Cetaphil Baby wash", ph_product_diaper: "e.g. Merries M diapers", ph_unit: "pcs / pack / can", ph_recommend: "e.g. Shopee shop xxx", ph_expense_item: "e.g. 1 carton of diapers", ph_saving_name: "e.g. university tuition fund", ph_insurer: "e.g. AIA / Muang Thai", ph_coverage: "e.g. IPD 500k + OPD 30k", ph_package: "e.g. Smart Kids child health plan", ph_title_mem: "e.g. first trip to the beach", ph_caption: "Tell the story of that day...", ph_activity: "e.g. wake+milk, morning nap, lunch", ph_act_note: "e.g. 180 ml milk", ph_food: "e.g. mashed pumpkin, banana", ph_meal: "e.g. fish congee + fruit",
+    // toast/confirm generic
+    saved: 'Saved ✅', added: 'Added ✅', tst_appt: 'Appointment saved ✅ — LINE reminder set', tst_vaccine: 'Vaccine added ✅',
+    tst_album: 'Album saved 💛', tst_menu: 'Menu saved ✅', tst_hw_done: 'Done 🎉', tst_role: 'Role updated ✅',
+    tst_remind: 'Reminder settings saved ✅', tst_member_rm: 'Member removed ✅', tst_pass_set: 'Password set ✅',
+    tst_retention: 'Keeping the last {n} days ✅', tst_history_limit: 'You can view the last {n} days',
+    tst_uploading: 'Uploading photo {i}/{n}...', tst_skip_big: 'Skipped {name} (over 8MB)',
+    err_vaccine: '❌ Enter the vaccine name', err_title_date: '❌ Enter a title and date', err_item: '❌ Enter an item',
+    err_product: '❌ Enter a product name', err_package: '❌ Enter a package name', err_time_act: '❌ Enter time and activity',
+    err_food: '❌ Enter a food name', err_pass_match: '❌ Passwords do not match',
+    cf_del_log: 'Delete this log?', cf_del_vaccine: 'Delete this vaccine?', cf_del_item: 'Delete this item?', cf_del_appt: 'Delete this appointment?',
+    cf_del_product: 'Delete this product?', cf_del_stock: 'Remove this item from stock?', cf_del_insurance: 'Delete this insurance?',
+    cf_del_album: 'Delete this album? (photos remain in Drive)', cf_del_slot: 'Delete this time slot?', cf_del_school: 'Delete this school?',
+    cf_del_homework: 'Delete this homework?', cf_del_member: 'Remove member "{name}"?\nThey will lose access and must be re-approved.'
+  }
+};
+function t(k) { return (I18N[LANG] && I18N[LANG][k] != null) ? I18N[LANG][k] : (I18N.th[k] != null ? I18N.th[k] : k); }
+function setLang(l) {
+  LANG = l; localStorage.setItem('bt_lang', l);
+  document.documentElement.setAttribute('lang', l);
+  applyNavLabels();
+  go(S.page);
+}
+function applyNavLabels() {
+  var map = { home: 'nav_home', health: 'nav_health', develop: 'nav_develop', stuff: 'nav_stuff', more: 'nav_more' };
+  document.querySelectorAll('#tabbar button').forEach(function (b) {
+    var span = b.querySelector('span'); if (span && map[b.dataset.page]) span.textContent = t(map[b.dataset.page]);
+  });
+}
+/** ป้ายจำนวนวัน: เลยกำหนด / วันนี้ / อีก N วัน */
+function daysLabel(days) {
+  if (days < 0) return t('overdue');
+  if (days <= 0) return t('today');
+  return t('in_n_days').replace('{n}', days);
+}
+/** ค่าจากข้อมูลอ้างอิง: โหมด EN ใช้คอลัมน์ <field>_en ถ้ามี ไม่งั้น fallback เป็นไทย */
+function refT(row, field) {
+  if (!row) return '';
+  var en = row[field + '_en'];
+  return (LANG === 'en' && en) ? en : (row[field] || '');
+}
+/** ป้ายช่วงอายุ: ใช้ label ต้นฉบับ (ไทย) หรือสร้างจากตัวเลขเดือน (อังกฤษ) */
+function ageRangeLabel(from, to, fallback) {
+  if (LANG !== 'en') return fallback;
+  var lo = (from === 0 || from == null) ? t('newborn') : String(from);
+  return lo + ' – ' + to + ' ' + t('age_mo');
+}
+
+/* URL ของ Web App (ฝังจาก doGet) — เรียก API ผ่าน JSONP (<script>)
+   สำคัญ: ทั้ง google.script.run และ fetch ใช้ไม่ได้ใน LIFF/sandbox ของ GAS (โดน CSP บล็อก)
+   JSONP โหลดผ่าน <script> เหมือน Chart.js/LIFF SDK จึงทะลุ CSP/CORS ได้ */
+var WEB_APP_URL = (typeof WEB_APP_URL !== 'undefined' && WEB_APP_URL) ? WEB_APP_URL : '';
+var _jsonpN = 0;
+function api(action, payload) {
+  // โหมด GAS จริง → JSONP ไปที่ doGet
+  if (WEB_APP_URL) {
+    return new Promise(function (resolve, reject) {
+      var cb = '_jcb' + (++_jsonpN);
+      var s = document.createElement('script');
+      var done = false;
+      var timer = setTimeout(function () { finish(null, 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (timeout)'); }, 20000);
+      function cleanup() { clearTimeout(timer); try { delete window[cb]; } catch (e) { window[cb] = undefined; } if (s.parentNode) s.parentNode.removeChild(s); }
+      function finish(res, errText) {
+        if (done) return; done = true; cleanup();
+        if (errText) { toast('❌ ' + errText); reject(new Error(errText)); return; }
+        if (!res || res.ok === false) { var m = (res && res.error) || 'error'; toast('❌ ' + m); reject(new Error(m)); return; }
+        resolve(res.data);
+      }
+      window[cb] = function (res) { finish(res); };
+      s.onerror = function () { finish(null, 'โหลดข้อมูลไม่ได้'); };
+      s.src = WEB_APP_URL + '?action=' + encodeURIComponent(action) +
+        '&userId=' + encodeURIComponent(S.userId || '') +
+        '&payload=' + encodeURIComponent(JSON.stringify(payload || {})) +
+        '&callback=' + cb + '&t=' + Date.now();
+      document.body.appendChild(s);
+    });
+  }
+  // โหมดพรีวิว/mock → google.script.run (mock stub ให้)
+  return new Promise(function (res, rej) {
+    google.script.run
+      .withSuccessHandler(res)
+      .withFailureHandler(function (e) { rej(e); toast('❌ ' + (e.message || e)); })
+      .apiCall(action, payload || {}, S.userId);
+  });
+}
+function $(sel) { return document.querySelector(sel); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function toast(msg) {
+  var t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(t._h); t._h = setTimeout(function () { t.classList.add('hidden'); }, 2500);
+}
+/* ปุ่มข้อความมาตรฐานทั้งระบบ: แก้ไข / ลบ / เพิ่ม */
+/* ป้ายอังกฤษของค่า enum (หมวด/ประเภท/เพศ ฯลฯ)
+   หมายเหตุ: ค่าที่บันทึกลงชีทยังเป็น "ไทย" เสมอ — แปลเฉพาะตอนแสดงผล ข้อมูลเดิมจึงไม่พัง */
+var ENUM_EN = {
+  // หมวดสินค้าน่าซื้อ
+  'ทั้งหมด': 'All', 'อาบน้ำ': 'Bath', 'อาหารการกิน': 'Feeding', 'รักษาแผล/ยา': 'First aid / Medicine',
+  'แพมเพิส': 'Diapers', 'การนอน': 'Sleep', 'ของเล่น': 'Toys',
+  // หมวดสต๊อก
+  'ผ้าอ้อม': 'Diapers', 'นม/อาหาร': 'Milk / Food', 'ยา/สุขภาพ': 'Medicine / Health', 'ของใช้อาบน้ำ': 'Bath supplies',
+  // หมวดค่าใช้จ่าย
+  'ค่าหมอ/ยา': 'Doctor / Medicine', 'ผ้าอ้อม/ของใช้': 'Diapers / Supplies', 'ค่าเรียน': 'Education',
+  'ของเล่น/หนังสือ': 'Toys / Books', 'ประกัน': 'Insurance',
+  // ใช้ร่วมกัน
+  'เสื้อผ้า': 'Clothing', 'อื่นๆ': 'Other',
+  // ประเภทเงินเก็บ
+  'เงินเก็บ': 'Savings', 'กองทุน': 'Fund', 'ค่าเทอม': 'Tuition',
+  // ความชอบอาหาร
+  'ชอบ': 'Likes', 'ไม่ชอบ': 'Dislikes', 'แพ้': 'Allergic',
+  // เพศ
+  'ชาย': 'Boy', 'หญิง': 'Girl',
+  // ชนิดนม
+  'นมแม่': 'Breast milk', 'นมผง': 'Formula',
+  // อึ — สี / ลักษณะ / กลิ่น
+  'เหลือง': 'Yellow', 'เขียว': 'Green', 'น้ำตาล': 'Brown', 'สีเข้ม': 'Dark', 'สีอ่อน': 'Pale',
+  'ซีด/เทา ⚠️': 'Pale / grey ⚠️', 'ดำ ⚠️': 'Black ⚠️', 'มีเลือด/แดง ⚠️': 'Blood / red ⚠️',
+  'ปกติ': 'Normal', 'นิ่ม': 'Soft', 'เหลว': 'Watery', 'แข็ง': 'Hard', 'เป็นก้อนแข็ง': 'Hard lumps',
+  'เหม็นผิดปกติ': 'Unusually foul', 'มีกลิ่นเหม็นผิดปกติ': 'Unusual smell',
+  'สีเข้ม เหม็น': 'Dark & smelly', 'สีอ่อน เหลว': 'Pale & watery'
+};
+/** แสดงค่า enum ตามภาษา (ค่าที่เก็บยังเป็นไทย) */
+function enumLabel(v) { return (LANG === 'en' && ENUM_EN[v]) ? ENUM_EN[v] : (v || ''); }
+/** สร้าง options ให้ select โดยคง value เป็นไทย แต่ label ตามภาษา */
+function enumOpts(arr) { return arr.map(function (v) { return { value: v, label: enumLabel(v) }; }); }
+function btnEdit(onclick) { return '<button class="btn sm gray" onclick="' + onclick + '">' + t('edit') + '</button>'; }
+function btnDel(onclick) { return '<button class="btn sm red" onclick="' + onclick + '">' + t('del') + '</button>'; }
+function btnAdd(onclick, label) { return '<button class="btn sm" onclick="' + onclick + '">＋ ' + (label || t('add')) + '</button>'; }
+/* accent สีธีมตามเพศ (ใช้กับกราฟ) */
+function accentColor() {
+  var girl = S.child && (String(S.child.gender || '').indexOf('หญิง') >= 0 || /^f/i.test(String(S.child.gender || '')));
+  return girl ? '#e88cb2' : '#6aa9df';
+}
+function applyTheme() {
+  var girl = S.child && (String(S.child.gender || '').indexOf('หญิง') >= 0 || /^f/i.test(String(S.child.gender || '')));
+  document.body.classList.toggle('theme-girl', !!girl);
+}
+function fmtD(d) { if (!d) return '-'; var x = new Date(d); return x.getDate() + '/' + (x.getMonth() + 1) + '/' + (x.getFullYear() + (LANG === 'en' ? 0 : 543)); }
+function todayStr() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function thisMonthStr() { return todayStr().slice(0, 7); }
+function canEdit() { return ['admin', 'editor'].indexOf(S.user.role) >= 0; }
+function canLog() { return ['admin', 'editor', 'logger'].indexOf(S.user.role) >= 0; }
+
+var LOG_ICON = { wake: '🌞', sleep: '😴', nap: '💤', bath: '🛁', milk: '🍼', water: '💧', food: '🍚', pee: '🚽', poop: '💩', med: '💊', note: '⚠️' };
+var LOG_NAME_TH = { wake: 'ตื่นนอน', sleep: 'เข้านอน', nap: 'งีบ', bath: 'อาบน้ำ', milk: 'นม', water: 'น้ำ', food: 'อาหาร', pee: 'ฉี่', poop: 'อึ', med: 'ยา', note: 'เหตุการณ์เฝ้าระวัง' };
+function logName(ty) { var k = 'ln_' + ty; return (I18N.th[k] != null) ? t(k) : (LOG_NAME_TH[ty] || ty); }
+function logLabel(ty) { return (LOG_ICON[ty] || '') + ' ' + logName(ty); }
+var LOG_CHIP = { wake: 'bg-yellow', sleep: 'bg-blue', nap: 'bg-blue', bath: 'bg-teal', milk: 'bg-coral', water: 'bg-blue', food: 'bg-yellow', pee: 'bg-teal', poop: 'bg-yellow', med: 'bg-coral', note: 'bg-coral' };
+
+/* ---------- init & login ---------- */
+async function startApp() {
+  var boot = await api('bootstrap');
+  S.user = boot.user;
+  try { S.retention = Number((await api('settings.get')).logRetentionDays) || 30; } catch (e) { S.retention = 30; }
+  S.children = boot.children;
+  S.child = S.children.find(function (c) { return c.id === boot.activeChildId; }) || S.children[0] || null;
+  $('#tabbar').classList.remove('hidden');
+  applyTheme();
+  applyNavLabels();
+  renderChildSelect();
+  go('home');
+}
+
+(async function init() {
+  // 1) มี session token จากการ login อีเมล → ใช้ก่อน
+  var token = localStorage.getItem('bt_token');
+  if (token) {
+    S.userId = token;
+    try { await startApp(); return; }
+    catch (e) {
+      localStorage.removeItem('bt_token');
+      S.userId = null;
+      // token หมดอายุ → เงียบๆ แล้วไปทางอื่นต่อ / error อื่นแสดงบนหน้า login
+      if (String(e.message || e).indexOf('SESSION') < 0) { showLogin(e.message || e); return; }
+    }
+  }
+  // 2) เปิดผ่าน LINE (LIFF) → เข้าอัตโนมัติ
+  if (LIFF_ID) {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      var p = await liff.getProfile();
+      S.userId = p.userId;
+      await startApp();
+      return;
+    } catch (e) { showLogin(e.message || e); return; }
+  }
+  // 3) เบราว์เซอร์ปกติ → หน้า login อีเมล
+  showLogin();
+})();
+
+function showLogin(msg) {
+  $('#tabbar').classList.add('hidden');
+  $('#childAge').textContent = '';
+  $('#childSelect').innerHTML = '<option>' + esc(APP_NAME) + '</option>';
+  $('#content').innerHTML =
+    '<div class="card" style="margin-top:36px">' +
+    '<div style="text-align:center;font-size:44px;margin-bottom:6px">👶👧</div>' +
+    '<h3 style="justify-content:center;font-size:24px">' + esc(APP_NAME) + '</h3>' +
+    '<p style="text-align:center;color:var(--muted);margin-bottom:16px">' + t('login_sub') + '</p>' +
+    (msg ? '<p style="color:var(--danger);text-align:center;margin-bottom:10px;font-size:13.5px">' + esc(msg) + '</p>' : '') +
+    '<div class="field"><label>' + t('email') + '</label><input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="username"></div>' +
+    '<div class="field"><label>' + t('password') + '</label><input type="password" id="loginPass" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')doLogin()"></div>' +
+    '<button class="btn" style="width:100%" id="loginBtn" onclick="doLogin()">' + t('login') + '</button>' +
+    '<p style="text-align:center;color:var(--muted);font-size:12.5px;margin-top:14px;line-height:1.7">' + t('login_hint') + '</p>' +
+    '</div>';
+}
+
+async function doLogin() {
+  var btn = $('#loginBtn');
+  btn.disabled = true; btn.textContent = t('logging_in');
+  try {
+    var r = await api('auth.login', { email: $('#loginEmail').value, password: $('#loginPass').value });
+    localStorage.setItem('bt_token', r.token);
+    S.userId = r.token;
+    await startApp();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = t('login');
+  }
+}
+
+function logout() {
+  api('auth.logout').catch(function () { }).then(function () {
+    localStorage.removeItem('bt_token');
+    location.reload();
+  });
+}
+
+function renderChildSelect() {
+  var sel = $('#childSelect');
+  if (!S.children.length) {
+    sel.innerHTML = '<option>' + t('e_no_child_opt') + '</option>';
+    $('#childAge').textContent = '';
+    return;
+  }
+  sel.innerHTML = S.children.map(function (c) {
+    var girl = String(c.gender || '').indexOf('หญิง') >= 0 || /^f/i.test(String(c.gender || ''));
+    return '<option value="' + c.id + '"' + (S.child && c.id === S.child.id ? ' selected' : '') + '>' + (girl ? '👧' : '👶') + ' ' + esc(c.nickname || c.name) + '</option>';
+  }).join('');
+  updateAgeChip();
+}
+
+/* อายุแบบ "ปี เดือน วัน" ฝั่ง client (ตรรกะเดียวกับ ageLabelTH ใน GAS) */
+function clientAgeTH(birthdate) {
+  if (!birthdate) return '';
+  var b = new Date(birthdate), now = new Date();
+  var y = now.getFullYear() - b.getFullYear();
+  var m = now.getMonth() - b.getMonth();
+  var d = now.getDate() - b.getDate();
+  if (d < 0) { m--; d += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+  if (m < 0) { y--; m += 12; }
+  var parts = [];
+  if (y > 0) parts.push(y + ' ' + t('age_y'));
+  if (m > 0) parts.push(m + ' ' + t('age_mo'));
+  parts.push(d + ' ' + t('age_d'));
+  return parts.join(' ');
+}
+
+function updateAgeChip() {
+  $('#childAge').textContent = S.child ? clientAgeTH(S.child.birthdate) : '';
+}
+
+/* วันของเด็ก (ตัดรอบ 6 โมงเช้า) — ใช้เป็น key ปิดแจ้งเตือนรายวัน */
+function clientBabyDay() {
+  var d = new Date();
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function alertsDismissed() {
+  return localStorage.getItem('bt_alertHide_' + (S.child ? S.child.id : '') + '_' + clientBabyDay()) === '1';
+}
+function dismissAlerts() {
+  localStorage.setItem('bt_alertHide_' + (S.child ? S.child.id : '') + '_' + clientBabyDay(), '1');
+  var el = $('#alertCard'); if (el) el.remove();
+}
+
+function switchChild(id) {
+  S.child = S.children.find(function (c) { return c.id === id; });
+  updateAgeChip();
+  applyTheme();
+  api('user.setActiveChild', { childId: id });
+  go(S.page);
+}
+
+function go(page) {
+  S.page = page;
+  document.querySelectorAll('#tabbar button').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  S.charts.forEach(function (c) { c.destroy(); }); S.charts = [];
+  $('#content').innerHTML = '<div class="loading">' + t('loading') + '</div>';
+  ({ home: pageHome, health: pageHealth, develop: pageDevelop, stuff: pageStuff, more: pageMore })[page]();
+}
+
+async function getRefs() {
+  if (!S.refs) S.refs = await api('refs');
+  return S.refs;
+}
+
+function needChild() {
+  if (S.child) return false;
+  $('#content').innerHTML = '<div class="card"><h3>' + t('nc_title') + '</h3><p>' + t('nc_sub') + '</p></div>';
+  return true;
+}
+
+/* ---------- modal form ---------- */
+function openForm(title, fields, onSubmit, submitLabel) {
+  var html = '<h3>' + esc(title) + '</h3>';
+  fields.forEach(function (f) {
+    if (f.type === 'label') { html += '<div class="form-sep">' + esc(f.label) + '</div>'; return; }
+    html += '<div class="field"><label>' + esc(f.label) + '</label>';
+    if (f.type === 'select') {
+      html += '<select id="f_' + f.key + '">' + f.options.map(function (o) {
+        var v = typeof o === 'string' ? o : o.value, l = typeof o === 'string' ? o : o.label;
+        return '<option value="' + esc(v) + '"' + (f.value === v ? ' selected' : '') + '>' + esc(l) + '</option>';
+      }).join('') + '</select>';
+    } else if (f.type === 'textarea') {
+      html += '<textarea id="f_' + f.key + '" rows="3">' + esc(f.value || '') + '</textarea>';
+    } else if (f.type === 'file') {
+      html += '<input type="file" id="f_' + f.key + '" accept="' + (f.accept || 'image/*') + '"' + (f.multiple ? ' multiple' : '') + '>';
+    } else {
+      html += '<input type="' + (f.type || 'text') + '" id="f_' + f.key + '" value="' + esc(f.value || '') + '"' +
+        (f.step ? ' step="' + f.step + '"' : '') + (f.placeholder ? ' placeholder="' + esc(f.placeholder) + '"' : '') + '>';
+    }
+    html += '</div>';
+  });
+  html += '<div class="modal-actions"><button class="btn gray" onclick="closeModal()">' + t('cancel') + '</button>' +
+    '<button class="btn" id="modalSubmit">' + esc(submitLabel || t('save')) + '</button></div>';
+  $('#modalBox').innerHTML = html;
+  $('#modal').classList.remove('hidden');
+  $('#modalSubmit').onclick = function () {
+    var vals = {};
+    fields.forEach(function (f) {
+      if (f.type === 'label') return;
+      var el = $('#f_' + f.key);
+      vals[f.key] = f.type === 'file' ? (f.multiple ? Array.prototype.slice.call(el.files) : el.files[0]) : el.value;
+    });
+    onSubmit(vals);
+  };
+}
+function closeModal() { $('#modal').classList.add('hidden'); }
+
+/* ================= หน้าหลัก ================= */
+async function pageHome() {
+  if (needChild()) return;
+  var d = await api('dashboard', { childId: S.child.id });
+  await getRefs();
+  $('#childAge').textContent = clientAgeTH(S.child.birthdate);
+
+  var html = '';
+  var g = d.latestGrowth || {};
+  // Hero card — โทน minimal ขาว: ชาย=ฟ้าอ่อน หญิง=ชมพูอ่อน | ชิปแสดง ส่วนสูง/น้ำหนัก/รอบหัว
+  var isGirl = String(S.child.gender || '').indexOf('หญิง') >= 0 || /^f/i.test(String(S.child.gender || ''));
+  html += '<div class="hero' + (isGirl ? ' girl' : '') + '">' +
+    '<div class="hero-name">' + esc(S.child.nickname || S.child.name) + '</div>' +
+    '<div class="hero-age">' + esc(clientAgeTH(S.child.birthdate)) + ' · ' + t('born') + ' ' + fmtD(S.child.birthdate) + '</div>' +
+    '<div class="hero-chips">' +
+    (S.child.blood_group ? '<span class="hero-chip">🩸 ' + t('h_blood') + ' ' + esc(S.child.blood_group) + '</span>' : '') +
+    '<span class="hero-chip">📏 ' + t('h_height') + ' ' + (g.height_cm || '-') + ' ' + t('unit_cm') + '</span>' +
+    '<span class="hero-chip">⚖️ ' + t('h_weight') + ' ' + (g.weight_kg || '-') + ' ' + t('unit_kg') + '</span>' +
+    '<span class="hero-chip">🧠 ' + t('h_head') + ' ' + (g.head_cm || '-') + ' ' + t('unit_cm') + '</span>' +
+    '<span class="hero-chip">🧩 ' + t('h_dev') + ' ' + d.milestone.checked + '/' + d.milestone.total + '</span>' +
+    '</div></div>';
+
+  // การ์ดแจ้งเตือน — ต่อจาก hero, มีปุ่มปิด (ซ่อนถึง 6 โมงเช้าวันถัดไป)
+  var alerts = '';
+  var alertRow = function (chip, icon, title, sub, badgeCls, badgeTxt) {
+    return '<div class="row"><span class="ico-chip ' + chip + '">' + icon + '</span>' +
+      '<div class="grow"><b>' + title + '</b>' + (sub ? '<br><small>' + sub + '</small>' : '') + '</div>' +
+      '<span class="badge ' + (badgeCls || '') + '">' + badgeTxt + '</span></div>';
+  };
+  (d.appointments || []).forEach(function (a) {
+    var adays = Math.ceil((new Date(a.date) - new Date()) / 86400000);
+    alerts += alertRow('bg-blue', '🗓', t('appt') + ': ' + esc(a.title || t('appt_default')),
+      fmtD(a.date) + (a.time ? ' ' + esc(a.time) : '') + (a.place ? ' · ' + esc(a.place) : ''),
+      adays <= 2 ? 'warn' : '', daysLabel(adays));
+  });
+  if (d.nextVaccine) {
+    var vdays = Math.ceil((new Date(d.nextVaccine.due_date) - new Date()) / 86400000);
+    alerts += alertRow('bg-coral', '💉', esc(d.nextVaccine.vaccine), t('due_on') + ' ' + fmtD(d.nextVaccine.due_date),
+      vdays < 0 ? 'danger' : vdays <= 7 ? 'warn' : '', daysLabel(vdays));
+  }
+  d.lowStock.forEach(function (i) {
+    alerts += alertRow('bg-yellow', '📦', esc(i.item), t('lowstock_sub'), 'danger', t('remaining') + ' ' + i.qty + ' ' + esc(i.unit || t('unit_piece')));
+  });
+  if (alerts && !alertsDismissed()) {
+    html += '<div class="card" id="alertCard"><h3>🔔 ' + t('alerts') +
+      '<button class="alert-x" title="' + t('hide_today') + '" onclick="dismissAlerts()">✕</button></h3>' + alerts + '</div>';
+  }
+
+  // โน้ตประจำวัน — แสดงเด่นถ้ามี
+  var notes = d.today.logs.filter(function (l) { return l.type === 'note'; });
+  if (notes.length) {
+    html += '<div class="card note-card"><h3>⚠️ ' + t('watch_today') + '</h3>';
+    notes.forEach(function (n) {
+      html += '<div class="row"><div class="grow">' + esc(n.detail) +
+        '<br><small>' + esc(n.time) + ' · ' + esc(n.logged_by) + '</small></div></div>';
+    });
+    html += '</div>';
+  }
+
+  // สถิติวันนี้ — มีไอคอน + รายละเอียด (ตัดรอบ 6 โมงเช้า) + ค่ามาตรฐานตามวัย
+  var td = d.today;
+  var ageM = Math.floor((new Date() - new Date(S.child.birthdate)) / (86400000 * 30.4375));
+  var wwH = (S.refs && S.refs.wakeWindows || []).find(function (r) { return ageM >= r.age_from_m && ageM <= r.age_to_m; });
+  var stdNote = wwH ? '<div class="std-note">🎯 <b>' + t('std_age') + '</b>' +
+    (wwH.milk ? ' · 🍼 ' + esc(refT(wwH, 'milk')) : '') + (wwH.meals ? ' · 🍚 ' + esc(refT(wwH, 'meals')) : '') +
+    ' · 😴 ' + esc(refT(wwH, 'total_sleep')) + '</div>' : '';
+  html += '<div class="card"><h3>📋 ' + t('today') + '<span class="cutoff-note">' + t('cutoff') + '</span></h3><div class="grid3">' +
+    statTile('🍼', td.milkOz + ' ' + t('st_oz'), t('st_milk') + ' ' + td.milkCount + ' ' + t('st_times'), 'st-peach') +
+    statTile('💧', td.water + ' ' + t('st_ml'), t('water_lbl') + ' ' + td.waterCount + ' ' + t('st_times'), 'st-yellow') +
+    statTile('🍚', td.foods + '', t('meals_lbl'), 'st-mint') +
+    statTile('😴', td.sleepHours + ' ' + t('st_hr'), t('st_sleep'), 'st-pink') +
+    statTile('💩', td.poop + '', t('poop_lbl'), 'st-lav') +
+    statTile('🚽', td.pee + '', t('pee_lbl'), 'st-blue') +
+    '</div>' + stdNote + '</div>';
+
+  // ปุ่มบันทึกด่วน
+  if (canLog()) {
+    html += '<div class="card"><h3>⚡ ' + t('quicklog') + '</h3><div class="grid3">' +
+      '<button class="qbtn" onclick="quickMilk(\'นมแม่\')">🤱 ' + t('q_bmilk') + '</button>' +
+      '<button class="qbtn" onclick="quickMilk(\'นมผง\')">🍼 ' + t('q_fmilk') + '</button>' +
+      '<button class="qbtn" onclick="quickLog(\'water\')">💧 ' + t('q_water') + '</button>' +
+      '<button class="qbtn" onclick="quickLog(\'food\')">🍚 ' + t('q_food') + '</button>' +
+      '<button class="qbtn" onclick="quickPoop()">💩 ' + t('q_poop') + '</button>' +
+      '<button class="qbtn" onclick="quickAdd(\'pee\')">🚽 ' + t('q_pee') + '</button>' +
+      '<button class="qbtn" onclick="quickLog(\'med\')">💊 ' + t('q_med') + '</button>' +
+      '<button class="qbtn" onclick="quickAdd(\'sleep\')">😴 ' + t('q_sleep') + '</button>' +
+      '<button class="qbtn" onclick="quickAdd(\'wake\')">🌞 ' + t('q_wake') + '</button>' +
+      '<button class="qbtn" onclick="quickAdd(\'bath\')">🛁 ' + t('q_bath') + '</button>' +
+      '<button class="qbtn" onclick="quickLog(\'note\')">⚠️ ' + t('q_event') + '</button>' +
+      '</div></div>';
+  }
+
+  // บันทึก — ต่อท้ายบันทึกด่วน + ดูย้อนหลังได้ตาม retention
+  homeLogDate = clientBabyDay();
+  html += '<div class="card"><h3>📝 ' + t('log') +
+    '<span class="daylog-nav">' +
+    '<button class="btn sm gray icon-btn" onclick="shiftDayLog(-1)">‹</button>' +
+    '<span id="dayLogLabel" class="daylog-label">' + t('today') + '</span>' +
+    '<button class="btn sm gray icon-btn" onclick="shiftDayLog(1)">›</button></span></h3>' +
+    '<div id="dayLogs"></div></div>';
+
+  $('#content').innerHTML = html;
+  loadDayLogs();
+}
+
+var homeLogDate;
+function fmtISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function logRow(l) {
+  return '<div class="row"><span class="ico-chip ' + (LOG_CHIP[l.type] || 'bg-yellow') + '">' + (LOG_ICON[l.type] || '📌') + '</span>' +
+    '<div class="grow">' + logName(l.type) +
+    (l.amount ? ' ' + l.amount + ' ' + esc(l.unit) : '') + (l.detail ? ' — ' + esc(l.detail) : '') +
+    '<br><small>' + esc(l.time) + t('by_sep') + esc(l.logged_by) + '</small></div>' +
+    (canEdit() ? btnDel('delLog(\'' + l.id + '\',\'' + esc(l.date || homeLogDate) + '\')') : '') + '</div>';
+}
+function shiftDayLog(delta) {
+  var nd = new Date(homeLogDate); nd.setDate(nd.getDate() + delta);
+  var s = fmtISO(nd), today = clientBabyDay();
+  if (s > today) return; // ไม่ให้ไปอนาคต
+  var back = Math.round((new Date(today) - new Date(s)) / 86400000);
+  if (back > (S.retention || 30)) { toast(t('tst_history_limit').replace('{n}', (S.retention || 30))); return; }
+  homeLogDate = s; loadDayLogs();
+}
+function loadDayLogs() {
+  var today = clientBabyDay();
+  var lbl = $('#dayLogLabel');
+  if (lbl) lbl.textContent = homeLogDate === today ? t('today') : fmtD(homeLogDate);
+  api('daily.list', { childId: S.child.id, date: homeLogDate }).then(function (logs) {
+    var box = $('#dayLogs'); if (!box) return;
+    box.innerHTML = logs.length ? logs.slice().reverse().map(logRow).join('') : '<div class="empty">' + t('no_log') + '</div>';
+  });
+}
+
+/* กล่องสถิติมีไอคอน (cls = คลาสสีเฉพาะช่อง) */
+function statTile(icon, value, label, cls) {
+  return '<div class="stat ' + (cls || '') + '"><span class="stat-ico">' + icon + '</span>' +
+    '<b>' + esc(value) + '</b><small>' + esc(label) + '</small></div>';
+}
+
+function quickAdd(type) {
+  api('daily.add', { log: { child_id: S.child.id, type: type } }).then(function () {
+    toast(t('saved')); go('home');
+  });
+}
+
+function quickLog(type) {
+  var fields = {
+    milk: [{ key: 'amount', label: t('fl_milk_ml'), type: 'number', value: 120 }],
+    water: [{ key: 'amount', label: t('fl_water_ml'), type: 'number', value: '' }],
+    food: [{ key: 'detail', label: t('fl_menu_eaten'), placeholder: t('ph_menu_eaten') }, { key: 'note', label: t('fl_pref_note'), placeholder: t('ph_pref_note') }],
+    poop: [{ key: 'detail', label: t('fl_charac'), type: 'select', options: enumOpts(['ปกติ', 'สีเข้ม', 'สีอ่อน', 'เหลว', 'แข็ง', 'มีกลิ่นเหม็นผิดปกติ', 'สีเข้ม เหม็น', 'สีอ่อน เหลว']) }],
+    med: [{ key: 'detail', label: t('fl_med_dose'), placeholder: t('ph_med_dose') }],
+    note: [{ key: 'detail', label: t('fl_event'), type: 'textarea', placeholder: t('ph_event') }]
+  }[type];
+  openForm(logLabel(type), fields, function (v) {
+    api('daily.add', { log: { child_id: S.child.id, type: type, amount: v.amount || '', unit: v.amount ? 'ml' : '', detail: v.detail || '', note: v.note || '' } })
+      .then(function () { closeModal(); toast(t('saved')); go('home'); });
+  });
+}
+
+/* นม — แยกนมแม่/นมผง */
+function quickMilk(kind) {
+  openForm(enumLabel(kind), [{ key: 'amount', label: t('fl_amount_ml'), type: 'number', value: '' }], function (v) {
+    api('daily.add', { log: { child_id: S.child.id, type: 'milk', amount: v.amount || '', unit: v.amount ? 'ml' : '', detail: kind } })
+      .then(function () { closeModal(); toast(t('saved')); go('home'); });
+  });
+}
+
+/* อึ — เลือกสี / ลักษณะ / กลิ่น */
+function quickPoop() {
+  openForm(t('ft_poop'), [
+    { key: 'color', label: t('fl_color'), type: 'select', options: enumOpts(['เหลือง', 'เขียว', 'น้ำตาล', 'สีเข้ม', 'ซีด/เทา ⚠️', 'ดำ ⚠️', 'มีเลือด/แดง ⚠️']) },
+    { key: 'texture', label: t('fl_charac'), type: 'select', options: enumOpts(['ปกติ', 'นิ่ม', 'เหลว', 'แข็ง', 'เป็นก้อนแข็ง']) },
+    { key: 'smell', label: t('fl_smell'), type: 'select', options: enumOpts(['ปกติ', 'เหม็นผิดปกติ']) }
+  ], function (v) {
+    var detail = [v.color, v.texture, v.smell === 'เหม็นผิดปกติ' ? 'เหม็น' : ''].filter(Boolean).join(' · ');
+    api('daily.add', { log: { child_id: S.child.id, type: 'poop', detail: detail } })
+      .then(function () { closeModal(); toast(t('saved')); go('home'); });
+  });
+}
+
+function delLog(id, date) {
+  if (!confirm(t('cf_del_log'))) return;
+  api('daily.delete', { date: date || todayStr(), id: id }).then(function () { go('home'); });
+}
+
+/* ================= สุขภาพ ================= */
+async function pageHealth() {
+  if (needChild()) return;
+  var results = await Promise.all([
+    api('list', { sheet: 'GrowthLogs', childId: S.child.id }),
+    api('list', { sheet: 'VaccineRecords', childId: S.child.id }),
+    api('list', { sheet: 'HealthRecords', childId: S.child.id }),
+    getRefs(),
+    api('list', { sheet: 'Appointments', childId: S.child.id })
+  ]);
+  var growth = results[0].sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  var vaccines = results[1].sort(function (a, b) { return new Date(a.due_date) - new Date(b.due_date); });
+  var health = results[2].sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+  S.health = health;
+  S.appointments = results[4].sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+
+  var latest = growth[growth.length - 1];
+
+  // การ์ดนัดพบแพทย์ — วางล่างสุด (ต่อจากบันทึกสุขภาพ ก่อนวัคซีน)
+  var apptHtml = '<div class="card"><h3>🗓 ' + t('appt') + (canEdit() ? '<button class="btn sm" onclick="editAppt()">＋ ' + t('add_appt') + '</button>' : '') + '</h3>';
+  var upcoming = S.appointments.filter(function (a) { return new Date(a.date) >= new Date(new Date().toDateString()); });
+  if (!upcoming.length) apptHtml += '<div class="empty">' + t('appt_none') + '</div>';
+  upcoming.forEach(function (a) {
+    var days = Math.ceil((new Date(a.date) - new Date()) / 86400000);
+    apptHtml += '<div class="row"><span class="ico-chip bg-blue">🩺</span>' +
+      '<div class="grow"><b>' + esc(a.title || t('appt_default')) + '</b> <span class="badge ' + (days <= 2 ? 'warn' : '') + '">' + daysLabel(days) + '</span>' +
+      '<br><small>📅 ' + fmtD(a.date) + (a.time ? ' ' + esc(a.time) : '') + (a.place ? ' · 📍 ' + esc(a.place) : '') + '</small></div>' +
+      (canEdit() ? btnEdit('editAppt(\'' + a.id + '\')') + btnDel('delAppt(\'' + a.id + '\')') : '') + '</div>';
+  });
+  apptHtml += '<p style="font-size:12px;color:var(--muted);margin-top:6px">' + t('appt_note') + '</p></div>';
+  var pdfHtml = '<button class="btn" id="pdfBtn" style="width:100%" onclick="reportWeekly()">' + t('pdf_btn') + '</button>';
+
+  var html = '<div class="card"><h3>📈 ' + t('growth') +
+    (canEdit() ? '<button class="btn sm" onclick="addGrowth()">＋ ' + t('log') + '</button>' : '') + '</h3><div class="grid3">' +
+    '<div class="stat st-peach"><b>' + (latest && latest.weight_kg || '-') + '</b><small>' + t('g_weight') + '</small></div>' +
+    '<div class="stat st-yellow"><b>' + (latest && latest.height_cm || '-') + '</b><small>' + t('g_height') + '</small></div>' +
+    '<div class="stat st-mint"><b>' + (latest && latest.head_cm || '-') + '</b><small>' + t('g_head') + '</small></div>' +
+    '<div class="stat st-pink"><b>' + (latest && latest.teeth_count || '-') + '</b><small>' + t('g_teeth') + '</small></div>' +
+    '<div class="stat st-lav"><b>' + (latest && latest.shirt_size || '-') + '</b><small>' + t('g_shirt') + '</small></div>' +
+    '<div class="stat st-blue"><b>' + (latest && latest.shoe_size || '-') + '</b><small>' + t('g_shoe') + '</small></div>' +
+    '</div></div>';
+
+  html += '<div class="card"><h3>' + t('chart_w') + '</h3><canvas id="wChart"></canvas></div>';
+  html += '<div class="card"><h3>' + t('chart_h') + '</h3><canvas id="hChart"></canvas></div>';
+
+  // คำอธิบายวิธีอ่านกราฟ + แหล่งที่มา (ให้ตรงกับหน้าตากราฟจริง)
+  var isGirlG = String(S.child.gender || '').indexOf('หญิง') >= 0 || /^f/i.test(String(S.child.gender || ''));
+  var genderTxt = isGirlG ? t('gender_girl') : t('gender_boy');
+  var whoLink = '<a href="https://www.who.int/tools/child-growth-standards" target="_blank" rel="noopener" style="color:var(--accent-dark)">who.int/tools/child-growth-standards</a>';
+  html += '<div class="card"><h3>' + t('gg_title') + '</h3>' +
+    '<p style="font-size:13.5px;line-height:1.9">' +
+    t('gg_p1') + '<br>' + t('gg_band') + '<br>' + t('gg_p50') + '<br>' +
+    t('gg_line').replace('{name}', esc(S.child.nickname || S.child.name)) + '</p>' +
+    '<p style="font-size:13.5px;line-height:1.9;margin-top:8px">' +
+    t('gg_ok') + '<br>' + t('gg_warn') + '</p>' +
+    '<p style="font-size:12.5px;line-height:1.8;margin-top:8px;background:var(--accent-soft);padding:8px 10px;border-radius:10px">' +
+    t('gg_gender').replace('{gender}', genderTxt) + '</p>' +
+    '<p style="font-size:12px;color:var(--muted);margin-top:10px">' + t('gg_source').replace('{url}', whoLink) + '</p></div>';
+
+  // วัคซีน — เพิ่มเอง/ลบได้ + แยกวัคซีนเสริม (ซื้อเพิ่ม) | เก็บไว้ต่อท้าย (ก่อนปุ่มปริ้น)
+  var vaccineHtml = '<div class="card"><h3>💉 ' + t('vaccine') + (canEdit() ? '<button class="btn sm" onclick="addVaccine()">＋ ' + t('add_vaccine') + '</button>' : '') + '</h3>';
+  vaccines.forEach(function (v) {
+    var done = v.status === 'done';
+    var days = Math.ceil((new Date(v.due_date) - new Date()) / 86400000);
+    var opt = String(v.optional) === 'optional';
+    vaccineHtml += '<div class="row"><div class="grow">' + esc(v.vaccine) +
+      (opt ? ' <span class="badge warn">' + t('vac_buy') + '</span>' : '') +
+      '<br><small>' + (done ? t('vac_given') + ' ' + fmtD(v.given_date) + (v.place ? ' @ ' + esc(v.place) : '') : t('due_on') + ' ' + fmtD(v.due_date)) + '</small></div>' +
+      (done ? '<span class="badge ok">' + t('vac_done') + '</span>'
+        : (canEdit() ? '<button class="btn sm green" onclick="markVaccine(\'' + v.id + '\')">' + t('vac_mark') + '</button>' : '<span class="badge ' + (days < 0 ? 'danger' : '') + '">' + t('vac_wait') + '</span>')) +
+      (canEdit() ? btnDel('delVaccine(\'' + v.id + '\')') : '') +
+      '</div>';
+  });
+  vaccineHtml += '<p style="font-size:12px;color:var(--muted);margin-top:8px">' + t('vac_note') + '</p>';
+  vaccineHtml += '</div>';
+
+  // ข้อมูลสุขภาพพื้นฐาน (จากโปรไฟล์ — แก้ที่ตั้งค่า)
+  html += '<div class="card"><h3>🩺 ' + t('basic_health') +
+    (canEdit() ? '<button class="btn sm gray" onclick="editChild(\'' + S.child.id + '\')">' + t('edit') + '</button>' : '') + '</h3>' +
+    '<div class="row"><div class="grow">🚫 ' + t('bh_allergy') + '<br><small>' + esc(S.child.allergies || t('no_info')) + '</small></div></div>' +
+    '<div class="row"><div class="grow">🩹 ' + t('bh_disease') + '<br><small>' + esc(S.child.diseases || t('no_info')) + '</small></div></div>' +
+    '<div class="row"><div class="grow">🩸 ' + t('bh_blood') + ' ' + esc(S.child.blood_group || '-') + ' • 🏥 ' + esc(S.child.hospital || '-') + '</div></div>' +
+    '<p style="font-size:12px;color:var(--muted);margin-top:4px">' + t('bh_note') + '</p></div>';
+
+  // บันทึกสุขภาพ (รายการเจ็บป่วย/ทำฟัน/ตรวจ ตามเหตุการณ์)
+  html += '<div class="card"><h3>🏥 ' + t('health_log') + (canEdit() ? '<button class="btn sm" onclick="addHealth()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!health.length) html += '<div class="empty">' + t('hlog_none') + '</div>';
+  var HTYPE = { illness: t('ht_illness'), allergy: t('ht_allergy'), dental: t('ht_dental'), checkup: t('ht_checkup'), other: t('ht_other') };
+  health.forEach(function (h) {
+    html += '<div class="row"><div class="grow">' + (HTYPE[h.type] || h.type) + ' — ' + esc(h.title) +
+      (h.detail ? '<br><small>' + esc(h.detail) + '</small>' : '') + '<br><small>' + fmtD(h.date) + '</small></div>' +
+      (canEdit() ? btnEdit('editHealth(\'' + h.id + '\')') + btnDel('delHealth(\'' + h.id + '\')') : '') + '</div>';
+  });
+  html += '</div>';
+
+  // ลำดับล่างสุด: นัดพบแพทย์ → วัคซีน → ปุ่มปริ้น
+  html += apptHtml + vaccineHtml + pdfHtml;
+
+  $('#content').innerHTML = html;
+  drawGrowthChart('wChart', 'weight', growth, 'weight_kg', t('g_weight'));
+  drawGrowthChart('hChart', 'height', growth, 'height_cm', t('g_height'));
+}
+
+function drawGrowthChart(canvasId, metric, growth, field, label) {
+  var gender = (S.child.gender || 'M').toUpperCase().indexOf('F') >= 0 || S.child.gender === 'หญิง' ? 'F' : 'M';
+  var std = S.refs.growthStd.filter(function (r) { return r.gender === gender && r.metric === metric; })
+    .sort(function (a, b) { return a.age_m - b.age_m; });
+  var birth = new Date(S.child.birthdate);
+  var pts = growth.filter(function (g) { return g[field]; }).map(function (g) {
+    return { x: (new Date(g.date) - birth) / (86400000 * 30.4375), y: Number(g[field]) };
+  });
+  var chart = new Chart(document.getElementById(canvasId), {
+    type: 'line',
+    data: {
+      datasets: [
+        // P97 เติมสีลงมาถึง P3 = แถบช่วงเกณฑ์ปกติ (range)
+        { label: t('chart_leg_band'), data: std.map(function (r) { return { x: r.age_m, y: r.p97 }; }),
+          borderColor: 'rgba(150,150,160,.25)', backgroundColor: 'rgba(150,150,160,.12)',
+          borderWidth: 1, pointRadius: 0, fill: '+2' },
+        { label: t('chart_leg_p50'), data: std.map(function (r) { return { x: r.age_m, y: r.p50 }; }),
+          borderColor: '#b6b6be', borderWidth: 2, pointRadius: 0, borderDash: [6, 4] },
+        { label: 'P3', data: std.map(function (r) { return { x: r.age_m, y: r.p3 }; }),
+          borderColor: 'rgba(150,150,160,.25)', borderWidth: 1, pointRadius: 0 },
+        { label: esc(S.child.nickname || S.child.name), data: pts, borderColor: accentColor(), backgroundColor: accentColor(), borderWidth: 3, pointRadius: 4, tension: .3 }
+      ]
+    },
+    options: {
+      scales: { x: { type: 'linear', title: { display: true, text: t('chart_axis_age') } }, y: { title: { display: true, text: label } } },
+      plugins: { legend: { labels: { boxWidth: 12, font: { size: 11 }, filter: function (i) { return i.text !== 'P3'; } } } }
+    }
+  });
+  S.charts.push(chart);
+}
+
+function reportWeekly() {
+  var btn = document.getElementById('pdfBtn');
+  if (btn) { btn.disabled = true; btn.textContent = t('pdf_generating'); }
+  api('report.weekly', { childId: S.child.id }).then(function (r) {
+    if (btn) { btn.disabled = false; btn.textContent = t('pdf_btn'); }
+    toast(t('pdf_done'));
+    window.open(r.url, '_blank');
+  }).catch(function () {
+    if (btn) { btn.disabled = false; btn.textContent = t('pdf_btn'); }
+  });
+}
+
+function addGrowth() {
+  openForm(t('ft_growth'), [
+    { key: 'date', label: t('fl_date'), type: 'date', value: todayStr() },
+    { key: 'weight_kg', label: t('g_weight'), type: 'number', step: '0.01' },
+    { key: 'height_cm', label: t('g_height'), type: 'number', step: '0.1' },
+    { key: 'head_cm', label: t('fl_head_cm'), type: 'number', step: '0.1' },
+    { key: 'shirt_size', label: t('g_shirt'), placeholder: t('ph_shirt') },
+    { key: 'shoe_size', label: t('g_shoe'), placeholder: t('ph_shoe') },
+    { key: 'teeth_count', label: t('fl_teeth'), type: 'number' }
+  ], function (v) {
+    v.child_id = S.child.id;
+    api('save', { sheet: 'GrowthLogs', record: v }).then(function () { closeModal(); toast(t('saved')); go('health'); });
+  });
+}
+
+function markVaccine(id) {
+  openForm(t('ft_vac_given'), [
+    { key: 'given_date', label: t('fl_given_date'), type: 'date', value: todayStr() },
+    { key: 'place', label: t('fl_place'), placeholder: t('ph_place_hosp') },
+    { key: 'lot_no', label: t('fl_lot') }
+  ], function (v) {
+    v.id = id; v.status = 'done';
+    api('save', { sheet: 'VaccineRecords', record: v }).then(function () { closeModal(); toast(t('saved')); go('health'); });
+  });
+}
+
+/* เพิ่มวัคซีนเอง (เสริม/ซื้อเพิ่ม หรือแผนเพิ่มเติม) */
+function addVaccine() {
+  openForm(t('ft_vac_add'), [
+    { key: 'vaccine', label: t('fl_vaccine_name'), placeholder: t('ph_vaccine') },
+    { key: 'optional', label: t('fl_type'), type: 'select', options: [{ value: 'optional', label: t('opt_vac_optional') }, { value: '', label: t('opt_vac_core') }] },
+    { key: 'due_date', label: t('fl_due_shot'), type: 'date', value: todayStr() },
+    { key: 'note', label: t('fl_note_opt') }
+  ], function (v) {
+    if (!v.vaccine) { toast(t('err_vaccine')); return; }
+    v.child_id = S.child.id; v.status = 'pending';
+    api('save', { sheet: 'VaccineRecords', record: v }).then(function () { closeModal(); toast(t('tst_vaccine')); go('health'); });
+  });
+}
+function delVaccine(id) {
+  if (!confirm(t('cf_del_vaccine'))) return;
+  api('delete', { sheet: 'VaccineRecords', id: id }).then(function () { go('health'); });
+}
+
+function addHealth(id) {
+  var h = id ? (S.health || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_health_edit') : t('ft_health_add'), [
+    { key: 'date', label: t('fl_date'), type: 'date', value: h.date ? String(h.date).slice(0, 10) : todayStr() },
+    { key: 'type', label: t('fl_type'), type: 'select', options: [{ value: 'illness', label: t('opt_illness') }, { value: 'allergy', label: t('opt_allergy') }, { value: 'dental', label: t('opt_dental') }, { value: 'checkup', label: t('opt_checkup') }, { value: 'other', label: t('opt_other') }], value: h.type },
+    { key: 'title', label: t('fl_title'), value: h.title, placeholder: t('ph_title_illness') },
+    { key: 'detail', label: t('fl_detail'), type: 'textarea', value: h.detail }
+  ], function (v) {
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'HealthRecords', record: v }).then(function () { closeModal(); toast(t('saved')); go('health'); });
+  });
+}
+function editHealth(id) { addHealth(id); }
+function delHealth(id) {
+  if (!confirm(t('cf_del_item'))) return;
+  api('delete', { sheet: 'HealthRecords', id: id }).then(function () { go('health'); });
+}
+
+function editAppt(id) {
+  var a = id ? (S.appointments || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_appt_edit') : t('ft_appt_add'), [
+    { key: 'title', label: t('fl_subject_appt'), value: a.title, placeholder: t('ph_subject_appt') },
+    { key: 'date', label: t('fl_appt_date'), type: 'date', value: a.date ? String(a.date).slice(0, 10) : '' },
+    { key: 'time', label: t('fl_time'), type: 'time', value: a.time || '' },
+    { key: 'place', label: t('fl_place'), value: a.place, placeholder: t('ph_place_bkk') },
+    { key: 'note', label: t('fl_note'), value: a.note }
+  ], function (v) {
+    if (!v.title || !v.date) { toast(t('err_title_date')); return; }
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Appointments', record: v }).then(function () { closeModal(); toast(t('tst_appt')); go('health'); });
+  });
+}
+function addAppt() { editAppt(); }
+function delAppt(id) {
+  if (!confirm(t('cf_del_appt'))) return;
+  api('delete', { sheet: 'Appointments', id: id }).then(function () { go('health'); });
+}
+
+/* ================= พัฒนาการ ================= */
+var devTab = 'milestone';
+async function pageDevelop() {
+  if (needChild()) return;
+  await getRefs();
+  var html = '<div class="seg">' +
+    '<button class="' + (devTab === 'milestone' ? 'active' : '') + '" onclick="devTab=\'milestone\';pageDevelop()">' + t('seg_check') + '</button>' +
+    '<button class="' + (devTab === 'activity' ? 'active' : '') + '" onclick="devTab=\'activity\';pageDevelop()">' + t('seg_activity') + '</button>' +
+    '<button class="' + (devTab === 'school' ? 'active' : '') + '" onclick="devTab=\'school\';pageDevelop()">' + t('seg_school') + '</button>' +
+    '</div><div id="devBody"><div class="loading">' + t('loading') + '</div></div>';
+  $('#content').innerHTML = html;
+
+  if (devTab === 'milestone') await renderMilestones();
+  else if (devTab === 'activity') renderActivities();
+  else await renderSchoolPrep();
+}
+
+async function renderMilestones() {
+  var checks = await api('milestone.list', { childId: S.child.id });
+  var checked = {}; checks.forEach(function (c) { checked[c.milestone_id] = true; });
+  var d = await api('dashboard', { childId: S.child.id });
+  var months = Math.floor(d.ageMonths);
+
+  var groups = {};
+  S.refs.milestones.forEach(function (m) {
+    (groups[m.age_label] = groups[m.age_label] || { from: m.age_from_m, to: m.age_to_m, items: [] }).items.push(m);
+  });
+  var DOMAIN = { GM: t('dom_gm'), FM: t('dom_fm'), RL: t('dom_rl'), EL: t('dom_el'), PS: t('dom_ps') };
+
+  var html = '<div class="card">';
+  var gi = 0;
+  Object.keys(groups).forEach(function (label) {
+    var g = groups[label];
+    var isCurrent = months >= g.from && months <= g.to;
+    var done = g.items.filter(function (m) { return checked[m.id]; }).length;
+    var allDone = done === g.items.length;
+    // ช่วงที่ติ๊กครบ = หุบไว้ (ยกเว้นตั้งใจกดเปิด) | ช่วงปัจจุบันเปิดเสมอ
+    var collapsed = allDone && !isCurrent && !S.msOpen[label];
+    var gid = 'ms_g' + (gi++);
+    html += '<div class="agehead' + (isCurrent ? ' current' : '') + '" onclick="toggleMsGroup(\'' + esc(label).replace(/'/g, '') + '\',\'' + gid + '\')" style="cursor:pointer">' +
+      '<span>' + (collapsed ? '▸' : '▾') + ' ' + esc(ageRangeLabel(g.from, g.to, label)) + '</span>' +
+      '<span class="ms-count' + (allDone ? ' ok' : '') + '">' + (allDone ? t('ms_done') : done + '/' + g.items.length) + '</span></div>';
+    html += '<div id="' + gid + '"' + (collapsed ? ' class="hidden"' : '') + '>';
+    g.items.forEach(function (m) {
+      html += '<div class="check' + (checked[m.id] ? ' done' : '') + '">' +
+        '<input type="checkbox" ' + (checked[m.id] ? 'checked' : '') + (canEdit() ? '' : ' disabled') +
+        ' onchange="toggleMs(\'' + m.id + '\')">' +
+        '<label>' + esc(m.item) + '<br><small style="color:var(--muted)">' + (DOMAIN[m.domain] || m.domain) + '</small></label></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div><p style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;line-height:1.7">' + t('ms_note') + '</p>';
+  $('#devBody').innerHTML = html;
+}
+
+function toggleMsGroup(label, gid) {
+  S.msOpen[label] = !S.msOpen[label];
+  var el = document.getElementById(gid);
+  if (el) el.classList.toggle('hidden');
+  var head = el && el.previousElementSibling && el.previousElementSibling.querySelector('span');
+  if (head) head.textContent = head.textContent.replace(/^[▸▾]/, el.classList.contains('hidden') ? '▸' : '▾');
+}
+
+function toggleMs(id) {
+  api('milestone.toggle', { childId: S.child.id, milestoneId: id }).then(function (r) {
+    toast(r.checked ? t('ms_checked') : t('ms_unchecked'));
+  });
+}
+
+function renderActivities() {
+  var months = Math.floor((new Date() - new Date(S.child.birthdate)) / (86400000 * 30.4375));
+  var acts = S.refs.activities.filter(function (a) { return months >= a.age_from_m && months <= a.age_to_m; });
+  var others = S.refs.activities.filter(function (a) { return !(months >= a.age_from_m && months <= a.age_to_m); });
+  var html = '<div class="card"><h3>🎯 ' + t('r_act_reco') + '</h3>';
+  if (!acts.length) html += '<div class="empty">' + t('e_no_age_data') + '</div>';
+  acts.forEach(function (a) {
+    html += '<div class="row"><div class="grow"><b>' + esc(a.title) + '</b> <span class="badge">' + esc(a.category) + '</span><br><small>' + esc(a.detail) + '</small></div></div>';
+  });
+  html += '</div><div class="card"><h3>' + t('r_act_other') + '</h3>';
+  others.forEach(function (a) {
+    html += '<div class="row"><div class="grow">' + esc(a.title) + ' <span class="badge">' + a.age_from_m + '-' + a.age_to_m + ' ด.</span><br><small>' + esc(a.detail) + '</small></div></div>';
+  });
+  html += '</div>';
+  html += '<p style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;line-height:1.7">' + t('act_note') + '</p>';
+  $('#devBody').innerHTML = html;
+}
+
+async function renderSchoolPrep() {
+  var results = await Promise.all([
+    api('prep.list', { childId: S.child.id }),
+    api('list', { sheet: 'CustomPrep', childId: S.child.id })
+  ]);
+  var checks = results[0], customs = results[1];
+  S.customPrep = customs;
+  var checked = {}; checks.forEach(function (c) { checked[c.prep_id] = true; });
+
+  var html = '<div class="card"><h3>🎒 ' + t('r_prep') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="addPrep()">＋ ' + t('add_vaccine') + '</button>' : '') + '</h3>';
+  // รายการ default (จากระบบ) — เฉพาะระดับอนุบาล
+  S.refs.schoolPrep.filter(function (p) { return p.level === 'อนุบาล'; }).forEach(function (p) {
+    html += '<div class="check' + (checked[p.id] ? ' done' : '') + '">' +
+      '<input type="checkbox" ' + (checked[p.id] ? 'checked' : '') + (canEdit() ? '' : ' disabled') +
+      ' onchange="togglePrep(\'' + p.id + '\')">' +
+      '<label>' + esc(p.item) + (p.note ? '<br><small style="color:var(--muted)">' + esc(p.note) + '</small>' : '') + '</label></div>';
+  });
+  // รายการที่ผู้ปกครองเพิ่มเอง (แก้ไข/ลบได้)
+  customs.forEach(function (p) {
+    var done = String(p.done) === '1';
+    html += '<div class="check' + (done ? ' done' : '') + '">' +
+      '<input type="checkbox" ' + (done ? 'checked' : '') + (canEdit() ? '' : ' disabled') +
+      ' onchange="toggleCustomPrep(\'' + p.id + '\',' + (done ? 'false' : 'true') + ')">' +
+      '<label>' + esc(p.item) + ' <span class="badge">' + t('lbl_optional') + '</span>' +
+      (p.note ? '<br><small style="color:var(--muted)">' + esc(p.note) + '</small>' : '') + '</label>' +
+      (canEdit() ? '<div style="display:flex;gap:6px;flex-shrink:0">' + btnEdit('editPrep(\'' + p.id + '\')') + btnDel('delPrep(\'' + p.id + '\')') + '</div>' : '') +
+      '</div>';
+  });
+  html += '</div><p style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px;line-height:1.7">' + t('prep_note') + '</p>';
+  $('#devBody').innerHTML = html;
+}
+
+function togglePrep(id) {
+  api('prep.toggle', { childId: S.child.id, prepId: id }).then(function (r) {
+    toast(r.checked ? t('ms_checked') : t('ms_unchecked'));
+  });
+}
+function toggleCustomPrep(id, done) {
+  api('save', { sheet: 'CustomPrep', record: { id: id, done: done ? '1' : '' } }).then(function () { renderSchoolPrep(); });
+}
+function addPrep() { editPrep(); }
+function editPrep(id) {
+  var p = id ? (S.customPrep || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_prep_edit') : t('ft_prep_add'), [
+    { key: 'item', label: t('fl_item'), value: p.item, placeholder: t('ph_prep_item') },
+    { key: 'note', label: t('fl_note_opt'), value: p.note }
+  ], function (v) {
+    if (!v.item) { toast(t('err_item')); return; }
+    if (id) v.id = id;
+    v.child_id = S.child.id; v.level = 'อนุบาล';
+    api('save', { sheet: 'CustomPrep', record: v }).then(function () { closeModal(); toast(id ? t('tst_edited') : t('added')); renderSchoolPrep(); });
+  });
+}
+function delPrep(id) {
+  if (!confirm(t('cf_del_item'))) return;
+  api('delete', { sheet: 'CustomPrep', id: id }).then(function () { renderSchoolPrep(); });
+}
+
+/* ================= ของ/เงิน ================= */
+var stuffTab = 'stock';
+async function pageStuff() {
+  if (needChild()) return;
+  var html = '<div class="seg">' +
+    '<button class="' + (stuffTab === 'stock' ? 'active' : '') + '" onclick="stuffTab=\'stock\';pageStuff()">📦 ' + t('tab_stock') + '</button>' +
+    '<button class="' + (stuffTab === 'wish' ? 'active' : '') + '" onclick="stuffTab=\'wish\';pageStuff()">🛍 ' + t('tab_wish') + '</button>' +
+    '<button class="' + (stuffTab === 'expense' ? 'active' : '') + '" onclick="stuffTab=\'expense\';pageStuff()">💸 ' + t('tab_expense') + '</button>' +
+    '<button class="' + (stuffTab === 'saving' ? 'active' : '') + '" onclick="stuffTab=\'saving\';pageStuff()">🏦 ' + t('tab_saving') + '</button>' +
+    '<button class="' + (stuffTab === 'benefit' ? 'active' : '') + '" onclick="stuffTab=\'benefit\';pageStuff()">🎁 ' + t('tab_benefit') + '</button>' +
+    '</div><div id="stuffBody"><div class="loading">' + t('loading') + '</div></div>';
+  $('#content').innerHTML = html;
+  if (stuffTab === 'stock') await renderStock();
+  else if (stuffTab === 'wish') await renderWish();
+  else if (stuffTab === 'expense') await renderExpense();
+  else if (stuffTab === 'benefit') renderBenefits();
+  else await renderSaving();
+}
+
+/* ---------- มุมประโยชน์ผู้ปกครอง: สิทธิเงินช่วยเหลือจากรัฐ (ข้อมูลอ้างอิง) ---------- */
+function renderBenefits() {
+  var link = function (url, name) { return '<a class="inline-link" href="' + url + '" target="_blank" rel="noopener">' + t('official_web') + name + '</a>'; };
+  var html = '';
+
+  /* ===== SECTION 1: เงินเลี้ยงลูกรายเดือน (รวม 1,600) ===== */
+  html += '<div class="bsec-head first">💰 เงินเลี้ยงลูกรายเดือน (รวมสูงสุด 1,600 ฿)</div>';
+  html += '<div class="benefit-hero">' +
+    '<div class="benefit-amt">1,600 ฿<span>/เดือน</span></div>' +
+    '<div class="benefit-sub">รวม 2 สิทธิ — เป็นคนละก้อน รับพร้อมกันได้ ถ้ามีสิทธิทั้งคู่</div>' +
+    '</div>';
+
+  var benefits = [
+    { emoji: '🏢', chip: 'bg-blue', name: 'เงินสงเคราะห์บุตร', org: 'ประกันสังคม', amount: '1,000', cond: 'เป็นผู้ประกันตน ม.33 หรือ ม.39 (ส่งเงินสมทบครบตามเกณฑ์)', age: 'แรกเกิด – 6 ปี', channel: 'แอป SSO Connect', url: 'https://www.sso.go.th', urlName: 'sso.go.th' },
+    { emoji: '👶', chip: 'bg-pink', name: 'เงินอุดหนุนเด็กแรกเกิด', org: 'พม. (กรมกิจการเด็กฯ)', amount: '600', cond: 'รายได้ครอบครัวเฉลี่ยไม่เกิน 100,000 บาท/คน/ปี', age: 'แรกเกิด – 6 ปี', channel: 'แอปเงินเด็ก / ทางรัฐ', url: 'https://csg.dcy.go.th', urlName: 'csg.dcy.go.th' }
+  ];
+  benefits.forEach(function (b) {
+    html += '<div class="card"><h3 class="left"><span class="ico-chip ' + b.chip + '">' + b.emoji + '</span> ' + esc(b.name) + '</h3>' +
+      '<div class="benefit-row eq"><span>จำนวนเงิน</span><b>' + b.amount + ' ฿/เดือน</b></div>' +
+      '<div class="benefit-row eq"><span>หน่วยงาน</span><b>' + esc(b.org) + '</b></div>' +
+      '<div class="benefit-row eq"><span>คุณสมบัติเด่น</span><b>' + esc(b.cond) + '</b></div>' +
+      '<div class="benefit-row eq"><span>ช่วงอายุ</span><b>' + esc(b.age) + '</b></div>' +
+      '<div class="benefit-row eq"><span>เช็ก/ลงทะเบียน</span><b>' + esc(b.channel) + '</b></div>' +
+      '<div style="margin-top:8px">' + link(b.url, b.urlName) + '</div></div>';
+  });
+
+  html += '<div class="card"><h3>📝 ' + t('r_steps') + '</h3>' +
+    '<div class="step"><span class="step-n">1</span><div>เช็กสิทธิของตัวเองทั้ง 2 ส่วน — สิทธิประกันสังคม (พ่อหรือแม่ที่เป็นผู้ประกันตน) และสิทธิเงินอุดหนุน (ดูเกณฑ์รายได้ครอบครัว)</div></div>' +
+    '<div class="step"><span class="step-n">2</span><div><b>ต้องลงทะเบียนแยกกัน</b> ทั้ง 2 สิทธิ — คนละหน่วยงาน คนละช่องทาง ไม่ผูกกันอัตโนมัติ</div></div>' +
+    '<div class="step"><span class="step-n">3</span><div>ตรวจข้อมูลในเอกสารให้ <b>ถูกต้องตรงกัน</b> (ชื่อ-เลขบัตร-เลขบัญชี) ทั้งสองใบ</div></div>' +
+    '<div class="step"><span class="step-n">4</span><div>เงินเริ่มโอนหลังได้รับอนุมัติ โดยปกติ <b>มีผลย้อนหลัง</b> ให้ตามเดือนที่ลงทะเบียน</div></div>' +
+    '<p style="font-size:12.5px;color:var(--muted);margin-top:8px">💡 อย่าลืมยืนยันตัวตน/อัปเดตข้อมูลรายปีของเงินอุดหนุน มิฉะนั้นอาจถูกระงับ</p></div>';
+
+  /* ===== SECTION 2: สิทธิอื่นๆ ที่ควรรู้ (แยกชัดเจน) ===== */
+  html += '<div class="bsec-head">🧾 สิทธิอื่นๆ ที่ควรรู้</div>';
+
+  html += '<div class="card"><h3>🧾 ' + t('r_tax') + '</h3>' +
+    '<div class="benefit-row eq"><span>ลดหย่อน</span><b>คนละ 30,000 บาท/ปี (บุตรคนที่ 2+ ที่เกิดตั้งแต่ปี 2561 = 60,000 บาท)</b></div>' +
+    '<div class="benefit-row eq"><span>เงื่อนไข</span><b>บุตรชอบด้วยกฎหมาย อายุไม่เกิน 20 ปี (หรือ 25 ปีถ้ากำลังศึกษา)</b></div>' +
+    '<div class="benefit-row eq"><span>ยื่นผ่าน</span><b>e-Filing กรมสรรพากร ตอนยื่นภาษีประจำปี</b></div>' +
+    '<div style="margin-top:8px">' + link('https://www.rd.go.th', 'rd.go.th') + '</div></div>';
+
+  // ค่าคลอด & สิทธิรักษา — หัวข้อหนา เนื้อหาบาง แบ่งคอลัมน์เท่ากัน
+  html += '<div class="card"><h3>🏥 ' + t('r_birth_rights') + '</h3>' +
+    '<div class="benefit-row eq"><span>ประกันสังคม</span><b>ค่าคลอดเหมาจ่าย 15,000 บาท/ครั้ง + เงินสงเคราะห์หยุดงาน 50% ของค่าจ้าง 90 วัน</b></div>' +
+    '<div class="benefit-row eq"><span>บัตรทอง (สปสช.)</span><b>คลอด/ฝากครรภ์/ตรวจสุขภาพเด็ก + วัคซีนพื้นฐาน ตามสิทธิ</b></div>' +
+    '<div class="benefit-row eq"><span>เช็กสิทธิ</span><b>แอป SSO Connect / สายด่วน สปสช. 1330</b></div>' +
+    '<p style="font-size:12px;color:var(--muted);margin-top:6px">พ่อ/แม่ใช้สิทธิได้ทางใดทางหนึ่งตามสิทธิที่มี</p></div>';
+
+  html += '<p style="font-size:11.5px;color:var(--muted);text-align:center;padding:0 8px 8px">ข้อมูลนี้เป็นแนวทางสรุปเพื่อความสะดวก โปรดตรวจสอบเงื่อนไขและจำนวนเงินปัจจุบันจากช่องทางทางการอีกครั้ง</p>';
+
+  $('#stuffBody').innerHTML = html;
+}
+
+/* ---------- สินค้าน่าซื้อ (ลิงก์ affiliate) ---------- */
+var wishCat = 'ทั้งหมด';
+var WISH_CATS = ['อาบน้ำ', 'อาหารการกิน', 'รักษาแผล/ยา', 'แพมเพิส', 'เสื้อผ้า', 'การนอน', 'ของเล่น', 'อื่นๆ'];
+var CAT_EMOJI = { 'อาบน้ำ': '🛁', 'อาหารการกิน': '🍽️', 'รักษาแผล/ยา': '🩹', 'แพมเพิส': '🧷', 'เสื้อผ้า': '👕', 'การนอน': '🛏️', 'ของเล่น': '🧸', 'อื่นๆ': '🛍️' };
+
+function detectPlatform(url) {
+  if (/shopee|shp\.ee/i.test(url)) return 'Shopee';
+  if (/tiktok/i.test(url)) return 'TikTok';
+  if (/lazada/i.test(url)) return 'Lazada';
+  return url ? 'อื่นๆ' : '';
+}
+function platClass(p) {
+  return p === 'Shopee' ? 'plat-shopee' : p === 'TikTok' ? 'plat-tiktok' : p === 'Lazada' ? 'plat-lazada' : 'plat-other';
+}
+
+async function renderWish() {
+  var items = await api('list', { sheet: 'Products' });
+  items.sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+  S.products = items;
+
+  var cats = ['ทั้งหมด'].concat(WISH_CATS);
+  var html = '<div class="tabs">' + cats.map(function (c) {
+    return '<button class="tabpill' + (wishCat === c ? ' active' : '') + '" onclick="wishCat=\'' + c + '\';renderWish()">' +
+      (CAT_EMOJI[c] ? CAT_EMOJI[c] + ' ' : '') + enumLabel(c) + '</button>';
+  }).join('') + '</div>';
+
+  var list = wishCat === 'ทั้งหมด' ? items : items.filter(function (i) { return i.category === wishCat; });
+  html += '<div class="card"><h3>🛍 ' + t('r_wish') + ' ' +
+    (canEdit() ? '<button class="btn sm" style="float:right" onclick="editProduct()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!list.length) {
+    html += '<div class="empty">' + t('e_no_product_cat') + '</div>';
+  }
+  var PLATS = [
+    { key: 'shopee', name: 'Shopee', cls: 'plat-shopee' },
+    { key: 'tiktok', name: 'TikTok', cls: 'plat-tiktok' },
+    { key: 'lazada', name: 'Lazada', cls: 'plat-lazada' }
+  ];
+  html += '<div class="prod-grid">';
+  list.forEach(function (p) {
+    // หาราคาต่ำสุดในบรรดา platform ที่มีลิงก์ เพื่อโชว์เด่น
+    var prices = PLATS.map(function (pl) { return Number(p[pl.key + '_price']) || 0; }).filter(function (n) { return n > 0; });
+    var minPrice = prices.length ? Math.min.apply(null, prices) : 0;
+    html += '<div class="prod">' +
+      (p.image_url
+        ? '<img class="prod-img" src="' + esc(p.image_url) + '" loading="lazy">'
+        : '<div class="prod-ph">' + (CAT_EMOJI[p.category] || '🛍️') + '</div>') +
+      '<div class="prod-body">' +
+      '<div class="prod-title">' + esc(p.title) + '</div>' +
+      (minPrice ? '<div class="prod-price">เริ่ม ' + minPrice.toLocaleString() + ' ฿</div>' : '') +
+      (p.note ? '<div style="font-size:11.5px;color:var(--muted);margin-top:4px">' + esc(p.note) + '</div>' : '') +
+      '<div class="prod-buys">' +
+      PLATS.filter(function (pl) { return p[pl.key + '_url']; }).map(function (pl) {
+        var pr = Number(p[pl.key + '_price']) || 0;
+        return '<a class="prod-buy ' + pl.cls + '" href="' + esc(p[pl.key + '_url']) + '" target="_blank" rel="noopener">' +
+          pl.name + (pr ? ' · ' + pr.toLocaleString() + '฿' : '') + '</a>';
+      }).join('') +
+      '</div>' +
+      (canEdit() ? '<div class="prod-tools">' +
+        btnEdit('editProduct(\'' + p.id + '\')') + btnDel('delProduct(\'' + p.id + '\')') + '</div>' : '') +
+      '</div></div>';
+  });
+  html += '</div></div>';
+  $('#stuffBody').innerHTML = html;
+}
+
+function editProduct(id) {
+  var p = id ? (S.products || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_wish_edit') : t('ft_wish_add'), [
+    { key: 'title', label: t('fl_product_name'), value: p.title, placeholder: t('ph_product_soap') },
+    { key: 'category', label: t('fl_category'), type: 'select', options: enumOpts(WISH_CATS), value: p.category },
+    { key: 'image_url', label: t('fl_img_link_opt'), value: p.image_url },
+    { key: 'note', label: t('fl_note_size'), value: p.note },
+    { key: '_sep_shopee', label: '🟠 Shopee', type: 'label' },
+    { key: 'shopee_price', label: t('fl_price'), type: 'number', step: '0.01', value: p.shopee_price },
+    { key: 'shopee_url', label: t('fl_link_aff'), value: p.shopee_url, placeholder: 'https://shopee.co.th/...' },
+    { key: '_sep_tiktok', label: '⚫ TikTok', type: 'label' },
+    { key: 'tiktok_price', label: t('fl_price'), type: 'number', step: '0.01', value: p.tiktok_price },
+    { key: 'tiktok_url', label: t('fl_link_aff'), value: p.tiktok_url, placeholder: 'https://vt.tiktok.com/...' },
+    { key: '_sep_lazada', label: '🔵 Lazada', type: 'label' },
+    { key: 'lazada_price', label: t('fl_price'), type: 'number', step: '0.01', value: p.lazada_price },
+    { key: 'lazada_url', label: t('fl_link_aff'), value: p.lazada_url, placeholder: 'https://s.lazada.co.th/...' }
+  ], function (v) {
+    if (!v.title) { toast(t('err_product')); return; }
+    if (id) v.id = id;
+    api('save', { sheet: 'Products', record: v }).then(function () {
+      closeModal(); toast(id ? t('tst_edited') : t('tst_wish_added')); renderWish();
+    });
+  });
+}
+
+function delProduct(id) {
+  if (!confirm(t('cf_del_product'))) return;
+  api('delete', { sheet: 'Products', id: id }).then(function () { renderWish(); });
+}
+
+async function renderStock() {
+  var items = await api('list', { sheet: 'Inventory', childId: S.child.id });
+  var html = '<div class="card"><h3>📦 ' + t('r_stock') + ' ' + (canEdit() ? '<button class="btn sm" style="float:right" onclick="addStock()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!items.length) html += '<div class="empty">' + t('e_no_product') + '</div>';
+  items.forEach(function (i) {
+    var low = Number(i.qty) <= Number(i.min_qty || 0);
+    html += '<div class="row"><div class="grow"><b>' + esc(i.item) + '</b> ' + (low ? '<span class="badge danger">' + t('near_out') + '</span>' : '') +
+      '<br><small>' + esc(enumLabel(i.category)) + (i.recommend ? t('lbl_recommend') + esc(i.recommend) : '') + '</small></div>' +
+      (canLog() ? '<button class="btn sm gray" onclick="adjStock(\'' + i.id + '\',-1)">−</button>' : '') +
+      '<b style="min-width:44px;text-align:center">' + i.qty + ' ' + esc(i.unit || '') + '</b>' +
+      (canLog() ? '<button class="btn sm gray" onclick="adjStock(\'' + i.id + '\',1)">+</button>' : '') +
+      (canEdit() ? btnDel('delStock(\'' + i.id + '\')') : '') +
+      '</div>';
+  });
+  html += '</div>';
+  var low = items.filter(function (i) { return Number(i.qty) <= Number(i.min_qty || 0); });
+  if (low.length) {
+    html += '<div class="card"><h3>🛒 ' + t('r_must_buy') + '</h3>' + low.map(function (i) {
+      return '<div class="row"><div class="grow">' + esc(i.item) + (i.recommend ? '<br><small>💡 ' + esc(i.recommend) + '</small>' : '') + '</div></div>';
+    }).join('') + '</div>';
+  }
+  $('#stuffBody').innerHTML = html;
+}
+
+function adjStock(id, delta) {
+  api('inventory.adjust', { id: id, delta: delta }).then(function () { renderStock(); });
+}
+function delStock(id) {
+  if (!confirm(t('cf_del_stock'))) return;
+  api('delete', { sheet: 'Inventory', id: id }).then(function () { renderStock(); });
+}
+
+function addStock() {
+  openForm(t('ft_stock_add'), [
+    { key: 'item', label: t('fl_product_name'), placeholder: t('ph_product_diaper') },
+    { key: 'category', label: t('fl_category'), type: 'select', options: enumOpts(['ผ้าอ้อม', 'นม/อาหาร', 'ยา/สุขภาพ', 'ของใช้อาบน้ำ', 'เสื้อผ้า', 'อื่นๆ']) },
+    { key: 'qty', label: t('fl_qty_left'), type: 'number', value: 1 },
+    { key: 'unit', label: t('fl_unit'), placeholder: t('ph_unit'), value: 'ชิ้น' },
+    { key: 'min_qty', label: t('fl_min_qty'), type: 'number', value: 2 },
+    { key: 'recommend', label: t('fl_recommend'), placeholder: t('ph_recommend') }
+  ], function (v) {
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Inventory', record: v }).then(function () { closeModal(); toast(t('added')); renderStock(); });
+  });
+}
+
+var expenseMonth = null; // 'yyyy-MM' — null = เดือนปัจจุบัน
+function shiftMonth(base, delta) {
+  var parts = base.split('-'); var d = new Date(Number(parts[0]), Number(parts[1]) - 1 + delta, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function monthLabelTH(m) {
+  var TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  var EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var p = m.split('-');
+  return (LANG === 'en' ? EN : TH)[Number(p[1]) - 1] + ' ' + yearLabel(Number(p[0]));
+}
+/** ปี: ไทยใช้ พ.ศ. / อังกฤษใช้ ค.ศ. */
+function yearLabel(y) { return Number(y) + (LANG === 'en' ? 0 : 543); }
+
+async function renderExpense() {
+  var month = expenseMonth || thisMonthStr();
+  var results = await Promise.all([
+    api('expense.summary', { childId: S.child.id, month: month }),
+    api('list', { sheet: 'Expenses', childId: S.child.id })
+  ]);
+  var sum = results[0];
+  var all = results[1];
+  var list = all.filter(function (e) { return String(e.date).indexOf(month) === 0; })
+    .sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+  var isThisMonth = month === thisMonthStr();
+  var year = month.slice(0, 4);
+  var yearTotal = all.filter(function (e) { return String(e.date).indexOf(year) === 0; })
+    .reduce(function (s, e) { return s + (Number(e.amount) || 0); }, 0);
+
+  // แถบเลือกเดือน (ซ้าย) + ' + t('year_total') + ' (ขวา) บรรทัดเดียวกัน
+  var html = '<div class="month-nav">' +
+    '<div class="month-picker">' +
+    '<button class="btn sm gray icon-btn" onclick="expenseMonth=\'' + shiftMonth(month, -1) + '\';renderExpense()">‹</button>' +
+    '<span class="month-label">' + monthLabelTH(month) + '</span>' +
+    '<button class="btn sm gray icon-btn"' + (isThisMonth ? ' disabled' : '') +
+    ' onclick="expenseMonth=\'' + shiftMonth(month, 1) + '\';renderExpense()">›</button>' +
+    '</div>' +
+    '<div class="year-total"><small>' + t('year_total') + ' ' + yearLabel(year) + '</small><b>' + yearTotal.toLocaleString() + ' ฿</b></div>' +
+    '</div>';
+
+  html += '<div class="card"><h3>💸 ' + t('r_expense_sum') + ' ' + Number(sum.total).toLocaleString() + ' ฿' +
+    (canEdit() ? '<button class="btn sm" onclick="addExpense()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!Object.keys(sum.byCategory).length) html += '<div class="empty">' + t('e_no_expense') + '</div>';
+  Object.keys(sum.byCategory).sort(function (a, b) { return sum.byCategory[b] - sum.byCategory[a]; }).forEach(function (cat) {
+    var pct = sum.total ? Math.round(sum.byCategory[cat] / sum.total * 100) : 0;
+    html += '<div class="row"><div class="grow">' + esc(enumLabel(cat)) +
+      '<div class="bar"><span style="width:' + pct + '%"></span></div></div>' +
+      '<b>' + Number(sum.byCategory[cat]).toLocaleString() + ' ฿</b></div>';
+  });
+  html += '</div><div class="card"><h3>' + t('r_list') + ' ' + monthLabelTH(month) + '</h3>';
+  if (!list.length) html += '<div class="empty">' + t('e_no_item') + '</div>';
+  list.forEach(function (e) {
+    html += '<div class="row"><div class="grow">' + esc(e.item) + '<br><small>' + fmtD(e.date) + ' • ' + esc(enumLabel(e.category)) + '</small></div><b>' + Number(e.amount).toLocaleString() + ' ฿</b></div>';
+  });
+  html += '</div>';
+  $('#stuffBody').innerHTML = html;
+}
+
+function addExpense() {
+  openForm(t('ft_expense_add'), [
+    { key: 'date', label: t('fl_date'), type: 'date', value: todayStr() },
+    { key: 'category', label: t('fl_category'), type: 'select', options: enumOpts(['ค่าหมอ/ยา', 'นม/อาหาร', 'ผ้าอ้อม/ของใช้', 'เสื้อผ้า', 'ค่าเรียน', 'ของเล่น/หนังสือ', 'ประกัน', 'อื่นๆ']) },
+    { key: 'item', label: t('fl_item'), placeholder: t('ph_expense_item') },
+    { key: 'amount', label: t('fl_amount_baht'), type: 'number', step: '0.01' }
+  ], function (v) {
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Expenses', record: v }).then(function () { closeModal(); toast(t('saved')); renderExpense(); });
+  });
+}
+
+async function renderSaving() {
+  var results = await Promise.all([
+    api('list', { sheet: 'Savings', childId: S.child.id }),
+    api('list', { sheet: 'Insurance', childId: S.child.id })
+  ]);
+  var list = results[0], ins = results[1];
+  S.insurance = ins;
+
+  // ---- เงินเก็บ / กองทุน (ประกันไม่รวมในนี้) ----
+  var html = '<div class="card"><h3>🏦 ' + t('r_saving') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="addSaving()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!list.length) html += '<div class="empty">' + t('e_no_saving') + '</div>';
+  list.forEach(function (s) {
+    var pct = s.target_amount ? Math.min(100, Math.round(Number(s.current_amount) / Number(s.target_amount) * 100)) : null;
+    html += '<div class="row"><div class="grow"><b>' + esc(s.name) + '</b> <span class="badge">' + esc(enumLabel(s.type)) + '</span>' +
+      '<br><small>' + Number(s.current_amount || 0).toLocaleString() + (s.target_amount ? ' / ' + Number(s.target_amount).toLocaleString() + ' ฿ (' + pct + '%)' : ' ฿') + '</small>' +
+      (s.target_amount ? '<div class="bar"><span style="width:' + pct + '%"></span></div>' : '') + '</div>' +
+      (canEdit() ? btnEdit('editSaving(\'' + s.id + '\',\'' + esc(s.name) + '\',' + (s.current_amount || 0) + ')') : '') + '</div>';
+  });
+  html += '</div>';
+
+  // ---- ประกัน (แยกต่างหาก มีได้หลายกรมธรรม์/แพ็กเกจ) ----
+  html += '<div class="card"><h3>🛡 ' + t('r_insurance') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="editInsurance()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!ins.length) html += '<div class="empty">' + t('e_no_insurance') + '</div>';
+  ins.forEach(function (p) {
+    // ป้ายวันครบกำหนดต่ออายุ
+    var renewBadge = '';
+    if (p.renew_date) {
+      var d = Math.ceil((new Date(p.renew_date) - new Date()) / 86400000);
+      var cls = d < 0 ? 'danger' : d <= 14 ? 'warn' : 'ok';
+      var txt = d < 0 ? t('renew_overdue').replace('{n}', -d) : d === 0 ? t('renew_today') : t('renew_in').replace('{n}', d);
+      renewBadge = ' <span class="badge ' + cls + '">🔄 ' + txt + '</span>';
+    }
+    html += '<div class="ins-item">' +
+      '<div class="ins-top"><span class="ico-chip bg-teal">🛡</span>' +
+      '<div class="grow"><b>' + esc(p.package_name || 'ประกัน') + '</b>' +
+      (p.company ? ' <span class="badge">' + esc(p.company) + '</span>' : '') + renewBadge +
+      (p.premium ? '<br><small>' + t('lbl_premium') + Number(p.premium).toLocaleString() + ' ฿</small>' : '') +
+      (p.coverage ? '<br><small>' + t('lbl_coverage') + esc(p.coverage) + '</small>' : '') +
+      (p.renew_date ? '<br><small>' + t('lbl_renew') + fmtD(p.renew_date) + '</small>' : '') + '</div></div>' +
+      '<div class="ins-meta">' +
+      (p.agent_name || p.agent_phone ? '<span>👤 ' + esc(p.agent_name || 'ตัวแทน') + (p.agent_phone ? ' · ' + esc(p.agent_phone) : '') + '</span>' : '') +
+      (p.agent_phone ? '<a class="ins-btn" href="tel:' + esc(p.agent_phone) + '">' + t('link_call_agent') + '</a>' : '') +
+      (p.url ? '<a class="ins-btn" href="' + esc(p.url) + '" target="_blank" rel="noopener">' + t('link_policy') + '</a>' : '') +
+      '</div>' +
+      (canEdit() ? '<div class="ins-tools">' + btnEdit('editInsurance(\'' + p.id + '\')') + btnDel('delInsurance(\'' + p.id + '\')') + '</div>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  $('#stuffBody').innerHTML = html;
+}
+
+function addSaving() {
+  openForm(t('ft_saving_add'), [
+    { key: 'type', label: t('fl_type'), type: 'select', options: enumOpts(['เงินเก็บ', 'กองทุน', 'ค่าเทอม']) },
+    { key: 'name', label: t('fl_name'), placeholder: t('ph_saving_name') },
+    { key: 'target_amount', label: t('fl_goal'), type: 'number' },
+    { key: 'current_amount', label: t('fl_current_amt'), type: 'number', value: 0 }
+  ], function (v) {
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Savings', record: v }).then(function () { closeModal(); toast(t('added')); renderSaving(); });
+  });
+}
+
+function editSaving(id, name, current) {
+  openForm(t('ft_balance') + name, [{ key: 'current_amount', label: t('fl_current_amt'), type: 'number', value: current }], function (v) {
+    api('save', { sheet: 'Savings', record: { id: id, current_amount: v.current_amount } })
+      .then(function () { closeModal(); renderSaving(); });
+  });
+}
+
+function editInsurance(id) {
+  var p = id ? (S.insurance || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_ins_edit') : t('ft_ins_add'), [
+    { key: 'package_name', label: t('fl_package'), value: p.package_name, placeholder: t('ph_package') },
+    { key: 'company', label: t('fl_insurer'), value: p.company, placeholder: t('ph_insurer') },
+    { key: 'premium', label: t('fl_premium'), type: 'number', value: p.premium },
+    { key: 'coverage', label: t('fl_coverage'), value: p.coverage, placeholder: t('ph_coverage') },
+    { key: 'renew_date', label: t('fl_renew'), type: 'date', value: p.renew_date ? String(p.renew_date).slice(0, 10) : '' },
+    { key: 'url', label: t('fl_policy_link'), value: p.url, placeholder: 'https://...' },
+    { key: '_sep_agent', label: t('sep_agent'), type: 'label' },
+    { key: 'agent_name', label: t('fl_agent_name'), value: p.agent_name },
+    { key: 'agent_phone', label: t('fl_agent_phone'), value: p.agent_phone, placeholder: '08x-xxx-xxxx' },
+    { key: 'note', label: t('fl_note_short'), value: p.note }
+  ], function (v) {
+    if (!v.package_name) { toast(t('err_package')); return; }
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Insurance', record: v }).then(function () { closeModal(); toast(id ? t('tst_edited') : t('tst_ins_added')); renderSaving(); });
+  });
+}
+
+function delInsurance(id) {
+  if (!confirm(t('cf_del_insurance'))) return;
+  api('delete', { sheet: 'Insurance', id: id }).then(function () { renderSaving(); });
+}
+
+/* ================= อื่นๆ ================= */
+var moreTab = 'memory';
+async function pageMore() {
+  var html = '<div class="seg">' +
+    '<button class="' + (moreTab === 'memory' ? 'active' : '') + '" onclick="moreTab=\'memory\';pageMore()">📸 ' + t('more_memory') + '</button>' +
+    '<button class="' + (moreTab === 'routine' ? 'active' : '') + '" onclick="moreTab=\'routine\';pageMore()">🕐 ' + t('more_routine') + '</button>' +
+    '<button class="' + (moreTab === 'school' ? 'active' : '') + '" onclick="moreTab=\'school\';pageMore()">🏫 ' + t('more_school') + '</button>' +
+    '<button class="' + (moreTab === 'setting' ? 'active' : '') + '" onclick="moreTab=\'setting\';pageMore()">⚙️ ' + t('more_setting') + '</button>' +
+    '</div><div id="moreBody"><div class="loading">' + t('loading') + '</div></div>';
+  $('#content').innerHTML = html;
+  if (moreTab === 'memory') await renderMemory();
+  else if (moreTab === 'routine') await renderRoutine();
+  else if (moreTab === 'school') await renderSchool();
+  else await renderSetting();
+}
+
+async function renderMemory() {
+  if (!S.child) { $('#moreBody').innerHTML = '<div class="empty">' + t('e_add_child_first_s') + '</div>'; return; }
+  var list = await api('list', { sheet: 'Memories', childId: S.child.id });
+  list.sort(function (a, b) { return new Date(b.date) - new Date(a.date); });
+  S.memories = list;
+  var html = '<div class="card"><h3>📸 ' + t('r_memory') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="addMemory()">＋ ' + t('add_album') + '</button>' : '') + '</h3></div>';
+  if (!list.length) html += '<div class="empty">' + t('e_no_album') + '</div>';
+  list.forEach(function (m) {
+    var urls = String(m.media_url || '').split('\n').filter(function (u) { return u; });
+    html += '<div class="card mem-album">' +
+      '<div class="mem-head"><div class="grow"><b>' + esc(m.title || 'ความทรงจำ') + '</b>' +
+      '<br><small>📅 ' + fmtD(m.date) + (urls.length ? ' · ' + urls.length + ' รูป' : '') + '</small>' +
+      (m.detail ? '<br><span class="mem-detail">' + esc(m.detail) + '</span>' : '') + '</div>' +
+      (canEdit() ? '<div style="display:flex;gap:6px;flex-shrink:0">' + btnEdit('editMemory(\'' + m.id + '\')') + btnDel('delMemory(\'' + m.id + '\')') + '</div>' : '') +
+      '</div>';
+    if (urls.length) {
+      html += '<div class="mem-photos">' + urls.map(function (u) {
+        return /(youtube|youtu\.be|\.mp4|video)/i.test(u)
+          ? '<a class="mem-video" href="' + esc(u) + '" target="_blank">🎬</a>'
+          : '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" loading="lazy"></a>';
+      }).join('') + '</div>';
+    }
+    html += '</div>';
+  });
+  $('#moreBody').innerHTML = html;
+}
+
+/* อัปโหลดไฟล์ทีละไฟล์เข้าอัลบั้ม (memoryId) แบบเรียงลำดับ */
+function uploadPhotos(memoryId, files, i, done) {
+  i = i || 0;
+  if (i >= files.length) { done(); return; }
+  var f = files[i];
+  if (f.size > 8 * 1024 * 1024) { toast(t('tst_skip_big').replace('{name}', f.name)); uploadPhotos(memoryId, files, i + 1, done); return; }
+  var reader = new FileReader();
+  reader.onload = function () {
+    toast(t('tst_uploading').replace('{i}', (i + 1)).replace('{n}', files.length));
+    api('memory.addPhoto', { memoryId: memoryId, base64: reader.result.split(',')[1], mimeType: f.type, filename: f.name })
+      .then(function () { uploadPhotos(memoryId, files, i + 1, done); });
+  };
+  reader.readAsDataURL(f);
+}
+
+function addMemory() { editMemory(); }
+function editMemory(id) {
+  var m = id ? (S.memories || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_album_edit') : t('ft_album_add'), [
+    { key: 'title', label: t('fl_title'), value: m.title, placeholder: t('ph_title_mem') },
+    { key: 'date', label: t('fl_date'), type: 'date', value: m.date ? String(m.date).slice(0, 10) : todayStr() },
+    { key: 'detail', label: t('fl_caption'), type: 'textarea', value: m.detail, placeholder: t('ph_caption') },
+    { key: 'files', label: t('fl_add_photos'), type: 'file', accept: 'image/*', multiple: true },
+    { key: 'link', label: t('fl_media_link'), value: '', placeholder: 'https://...' }
+  ], function (v) {
+    var links = v.link ? [v.link] : [];
+    // บันทึก metadata ก่อน (ได้ id) แล้วค่อยอัปโหลดรูปเข้าอัลบั้ม
+    var rec = { child_id: S.child.id, date: v.date, title: v.title, detail: v.detail };
+    if (id) rec.id = id;
+    api('save', { sheet: 'Memories', record: rec }).then(function (saved) {
+      var memId = saved.id || id;
+      var afterLinks = function () {
+        if (v.files && v.files.length) {
+          uploadPhotos(memId, v.files, 0, function () { closeModal(); toast(t('tst_album')); renderMemory(); });
+        } else { closeModal(); toast(id ? t('tst_edited') : t('saved')); renderMemory(); }
+      };
+      // แปะลิงก์ (append เข้า media_url)
+      if (links.length) {
+        var existing = String(saved.media_url || m.media_url || '').split('\n').filter(function (u) { return u; });
+        api('save', { sheet: 'Memories', record: { id: memId, media_url: existing.concat(links).join('\n'), media_type: 'album' } }).then(afterLinks);
+      } else afterLinks();
+    });
+  });
+}
+function delMemory(id) {
+  if (!confirm(t('cf_del_album'))) return;
+  api('delete', { sheet: 'Memories', id: id }).then(function () { renderMemory(); });
+}
+
+var mealDay = new Date().getDay(); // 0=อา ... 6=ส
+var DAY_TH = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+var DAY_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function DAY_LABEL(i) { return (LANG === 'en' ? DAY_EN : DAY_TH)[i]; }
+var MEALS = ['เช้า', 'ว่างเช้า', 'กลางวัน', 'ว่างบ่าย', 'เย็น'];
+/* ป้ายแสดงผลอังกฤษ — ค่าที่บันทึกลงชีทยังเป็นไทยเหมือนเดิม */
+var MEAL_EN = { 'เช้า': 'Breakfast', 'ว่างเช้า': 'AM snack', 'กลางวัน': 'Lunch', 'ว่างบ่าย': 'PM snack', 'เย็น': 'Dinner' };
+function mealLabel(m) { return (LANG === 'en' && MEAL_EN[m]) ? MEAL_EN[m] : m; }
+var SCHOOL_LEVELS = ['เนอสเซอรี่', 'เตรียมอนุบาล', 'อนุบาล'];
+var LEVEL_EN = { 'เนอสเซอรี่': 'Nursery', 'เตรียมอนุบาล': 'Pre-kindergarten', 'อนุบาล': 'Kindergarten' };
+function levelLabel(v) { return (LANG === 'en' && LEVEL_EN[v]) ? LEVEL_EN[v] : (v || ''); }
+async function renderRoutine() {
+  if (!S.child) { $('#moreBody').innerHTML = '<div class="empty">' + t('e_add_child_first') + '</div>'; return; }
+  var loaded = await Promise.all([
+    getRefs(),
+    api('list', { sheet: 'CustomRoutines', childId: S.child.id }),
+    api('list', { sheet: 'WeekMealPlan', childId: S.child.id }),
+    api('list', { sheet: 'FavFoods', childId: S.child.id })
+  ]);
+  var custom = loaded[1].sort(function (a, b) { return String(a.time) < String(b.time) ? -1 : 1; });
+  S.routines = custom;
+  S.mealplan = loaded[2];
+  S.favfoods = loaded[3];
+  var months = Math.floor((new Date() - new Date(S.child.birthdate)) / (86400000 * 30.4375));
+  var ww = S.refs.wakeWindows.find(function (r) { return months >= r.age_from_m && months <= r.age_to_m; });
+  var menu = S.refs.menus.find(function (r) { return months >= r.age_from_m && months <= r.age_to_m; });
+
+  var html = '';
+
+  // 1) ตารางแนะนำตามวัย (การนอน + นม + มื้ออาหาร)
+  if (ww) {
+    html += '<div class="card"><h3>🕐 ' + t('r_sched_age') + ' ' + esc(refT(ww, 'age_label')) + '</h3><div class="grid2">' +
+      '<div class="stat st-peach"><b>' + esc(refT(ww, 'wake_window')) + '</b><small>' + t('sm_wake') + '</small></div>' +
+      '<div class="stat st-yellow"><b>' + esc(refT(ww, 'naps')) + '</b><small>' + t('nap_day') + '</small></div>' +
+      '<div class="stat st-mint"><b>' + esc(refT(ww, 'night_sleep')) + '</b><small>' + t('sleep_night') + '</small></div>' +
+      '<div class="stat st-pink"><b>' + esc(refT(ww, 'total_sleep')) + '</b><small>' + t('total_day') + '</small></div>' +
+      (ww.milk ? '<div class="stat st-lav"><b>🍼 ' + esc(refT(ww, 'milk')) + '</b><small>' + t('sm_milk') + '</small></div>' : '') +
+      (ww.meals ? '<div class="stat st-blue"><b>🍚 ' + esc(refT(ww, 'meals')) + '</b><small>' + t('sm_meals') + '</small></div>' : '') +
+      '</div><pre class="routine" style="margin-top:12px">' + esc(String(refT(ww, 'routine')).split(' | ').join('\n')) + '</pre>' +
+      '<p style="font-size:12px;color:var(--muted);margin-top:8px">' + t('src_sleep') + '</p></div>';
+  }
+
+  // 2) ตารางกิจวัตรของบ้านเรา (custom)
+  html += '<div class="card"><h3>🏠 ' + t('r_our_sched') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="addRoutine()">＋ ' + t('add_slot') + '</button>' : '') + '</h3>';
+  if (!custom.length) {
+    html += '<div class="empty">' + t('e_no_sched') + '</div>';
+  } else {
+    custom.forEach(function (r) {
+      html += '<div class="row"><span class="badge" style="min-width:52px;text-align:center">' + esc(r.time) + '</span>' +
+        '<div class="grow"><b>' + esc(r.activity) + '</b>' + (r.note ? '<br><small>' + esc(r.note) + '</small>' : '') + '</div>' +
+        (canEdit() ? btnEdit('editRoutine(\'' + r.id + '\')') + btnDel('delRoutine(\'' + r.id + '\')') : '') + '</div>';
+    });
+  }
+  html += '</div>';
+
+  // 3) อาหารช่วงวัย (menu ref)
+  if (menu) {
+    html += '<div class="card"><h3>🍽 ' + t('r_meal_age') + ' ' + esc(refT(menu, 'age_label')) + '</h3>' +
+      '<p style="margin-bottom:8px"><b>' + esc(refT(menu, 'meals_per_day')) + '</b></p>' +
+      '<p style="color:var(--muted);font-size:14px;margin-bottom:10px">' + esc(refT(menu, 'guide')) + '</p>' +
+      '<pre class="routine">' + esc(t('sample_menu_lbl') + '\n' + String(refT(menu, 'sample_menus')).split(' | ').map(function (s) { return '• ' + s; }).join('\n')) + '</pre>' +
+      '<p style="font-size:12px;color:var(--muted);margin-top:8px">' + t('src_menu') + '</p></div>';
+  }
+
+  // 4) อาหารที่ชอบ / ไม่ชอบ / แพ้
+  html += '<div class="card"><h3>🍴 ' + t('r_fav_food') + '' +
+    (canEdit() ? '<button class="btn sm" onclick="editFav()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!S.favfoods.length) html += '<div class="empty">' + t('e_no_fav') + '</div>';
+  var PREF = { 'ชอบ': 'ok', 'ไม่ชอบ': 'warn', 'แพ้': 'danger' };
+  S.favfoods.forEach(function (f) {
+    html += '<div class="row"><span class="ico-chip ' + (f.pref === 'แพ้' ? 'bg-coral' : f.pref === 'ไม่ชอบ' ? 'bg-yellow' : 'bg-teal') + '">' +
+      (f.pref === 'แพ้' ? '⚠️' : f.pref === 'ไม่ชอบ' ? '😖' : '😋') + '</span>' +
+      '<div class="grow"><b>' + esc(f.food) + '</b> <span class="badge ' + (PREF[f.pref] || '') + '">' + esc(enumLabel(f.pref || 'ชอบ')) + '</span>' +
+      (f.note ? '<br><small>' + esc(f.note) + '</small>' : '') + '</div>' +
+      (canEdit() ? btnEdit('editFav(\'' + f.id + '\')') + btnDel('delFav(\'' + f.id + '\')') : '') + '</div>';
+  });
+  html += '</div>';
+
+  // 5) ตารางมื้ออาหารรายสัปดาห์ (เมนู + ส่วนประสม, แก้ไขเองได้)
+  html += '<div class="card"><h3>🍽 ' + t('r_meal_week') + '</h3>' +
+    '<div class="tabs">' + DAY_TH.map(function (d, i) {
+      return '<button class="tabpill' + (mealDay === i ? ' active' : '') + '" onclick="mealDay=' + i + ';renderRoutine()">' + DAY_LABEL(i) + (i === new Date().getDay() ? ' •' : '') + '</button>';
+    }).join('') + '</div>';
+  MEALS.forEach(function (meal) {
+    var row = S.mealplan.filter(function (r) { return Number(r.day) === mealDay && r.meal === meal; })[0];
+    html += '<div class="row"><span class="badge" style="min-width:64px;text-align:center">' + mealLabel(meal) + '</span>' +
+      '<div class="grow">' + (row && row.menu
+        ? esc(row.menu) + (row.ingredients ? '<br><small style="color:var(--muted)">' + t('ing_lbl') + esc(row.ingredients) + '</small>' : '')
+        : '<small style="color:var(--muted)">' + t('undefined_menu') + '</small>') + '</div>' +
+      (canEdit() ? '<button class="btn sm gray" onclick="editMeal(\'' + meal + '\')">' + (row && row.menu ? t('edit') : t('add')) + '</button>' : '') + '</div>';
+  });
+  html += '</div>';
+
+  $('#moreBody').innerHTML = html || '<div class="empty">' + t('e_no_age_data') + '</div>';
+}
+
+function editRoutine(id) {
+  var r = id ? (S.routines || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_slot_edit') : t('ft_slot_add'), [
+    { key: 'time', label: t('fl_time'), type: 'time', value: r.time || '' },
+    { key: 'activity', label: t('fl_activity'), value: r.activity, placeholder: t('ph_activity') },
+    { key: 'note', label: t('fl_note_opt'), value: r.note, placeholder: t('ph_act_note') }
+  ], function (v) {
+    if (!v.time || !v.activity) { toast(t('err_time_act')); return; }
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'CustomRoutines', record: v }).then(function () {
+      closeModal(); toast(id ? t('tst_edited') : t('added')); renderRoutine();
+    });
+  });
+}
+function addRoutine() { editRoutine(); }
+function delRoutine(id) {
+  if (!confirm(t('cf_del_slot'))) return;
+  api('delete', { sheet: 'CustomRoutines', id: id }).then(function () { renderRoutine(); });
+}
+
+function editFav(id) {
+  var f = id ? (S.favfoods || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_food_edit') : t('ft_food_add'), [
+    { key: 'food', label: t('fl_food_name'), value: f.food, placeholder: t('ph_food') },
+    { key: 'pref', label: t('fl_preference'), type: 'select', options: enumOpts(['ชอบ', 'ไม่ชอบ', 'แพ้']), value: f.pref },
+    { key: 'note', label: t('fl_note_opt'), value: f.note }
+  ], function (v) {
+    if (!v.food) { toast(t('err_food')); return; }
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'FavFoods', record: v }).then(function () { closeModal(); toast(t('saved')); renderRoutine(); });
+  });
+}
+function delFav(id) {
+  if (!confirm(t('cf_del_item'))) return;
+  api('delete', { sheet: 'FavFoods', id: id }).then(function () { renderRoutine(); });
+}
+
+function editMeal(meal) {
+  var row = (S.mealplan || []).filter(function (r) { return Number(r.day) === mealDay && r.meal === meal; })[0];
+  openForm(t('ft_meal').replace('{meal}', mealLabel(meal)).replace('{day}', DAY_LABEL(mealDay)), [
+    { key: 'menu', label: t('fl_menu'), type: 'textarea', value: row ? row.menu : '', placeholder: t('ph_meal') },
+    { key: 'ingredients', label: t('fl_ingredients'), type: 'textarea', value: row ? row.ingredients : '', placeholder: t('ph_ingredients') }
+  ], function (v) {
+    var rec = row ? { id: row.id, menu: v.menu, ingredients: v.ingredients } : { child_id: S.child.id, day: mealDay, meal: meal, menu: v.menu, ingredients: v.ingredients };
+    api('save', { sheet: 'WeekMealPlan', record: rec }).then(function () { closeModal(); toast(t('tst_menu')); renderRoutine(); });
+  });
+}
+
+async function renderSchool() {
+  if (!S.child) { $('#moreBody').innerHTML = '<div class="empty">' + t('e_add_child_first') + '</div>'; return; }
+  var results = await Promise.all([
+    api('list', { sheet: 'Schools', childId: S.child.id }),
+    api('list', { sheet: 'Homework', childId: S.child.id })
+  ]);
+  var schools = results[0], hw = results[1].filter(function (h) { return h.status !== 'done'; });
+  S.schools = results[0]; S.homework = results[1];
+
+  var html = '<div class="card"><h3>🏫 ' + t('r_school') + ' ' + (canEdit() ? '<button class="btn sm" onclick="addSchool()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!schools.length) html += '<div class="empty">' + t('e_no_school') + '</div>';
+  schools.forEach(function (s) {
+    html += '<div class="row"><div class="grow"><b>' + esc(s.school_name) + '</b> <span class="badge">' + esc(levelLabel(s.level)) + '</span>' +
+      '<br><small>' + t('lbl_teacher') + esc(s.teacher || '-') + t('lbl_contact') + esc(s.contact || '-') + '</small>' +
+      (s.schedule_note ? '<br><small>' + esc(s.schedule_note) + '</small>' : '') + '</div>' +
+      (canEdit() ? '<div style="display:flex;gap:6px;flex-shrink:0">' + btnEdit('editSchool(\'' + s.id + '\')') + btnDel('delSchool(\'' + s.id + '\')') + '</div>' : '') + '</div>';
+  });
+  html += '</div><div class="card"><h3>📚 ' + t('r_homework') + ' ' + (canEdit() ? '<button class="btn sm" onclick="addHomework()">＋ ' + t('add') + '</button>' : '') + '</h3>';
+  if (!hw.length) html += '<div class="empty">' + t('e_no_homework') + '</div>';
+  hw.sort(function (a, b) { return new Date(a.due_date) - new Date(b.due_date); }).forEach(function (h) {
+    html += '<div class="row"><div class="grow">' + esc(h.title) + (h.subject ? ' <span class="badge">' + esc(h.subject) + '</span>' : '') +
+      '<br><small>' + t('lbl_submit_hw') + fmtD(h.due_date) + '</small></div>' +
+      (canEdit() ? '<button class="btn sm green" onclick="doneHomework(\'' + h.id + '\')"' + t('btn_done_hw') + '</button>' + btnEdit('editHomework(\'' + h.id + '\')') + btnDel('delHomework(\'' + h.id + '\')') : '') + '</div>';
+  });
+  html += '</div>';
+  $('#moreBody').innerHTML = html;
+}
+
+function editSchool(id) {
+  var s = id ? (S.schools || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_school_edit') : t('ft_school_add'), [
+    { key: 'level', label: t('fl_level'), type: 'select', options: SCHOOL_LEVELS.map(function (v) { return { value: v, label: levelLabel(v) }; }), value: s.level },
+    { key: 'school_name', label: t('fl_school_name'), value: s.school_name },
+    { key: 'teacher', label: t('fl_teacher'), value: s.teacher },
+    { key: 'contact', label: t('fl_contact'), value: s.contact },
+    { key: 'schedule_note', label: t('fl_schedule_note'), type: 'textarea', value: s.schedule_note }
+  ], function (v) {
+    if (id) v.id = id;
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Schools', record: v }).then(function () { closeModal(); toast(t('saved')); renderSchool(); });
+  });
+}
+function addSchool() { editSchool(); }
+function delSchool(id) {
+  if (!confirm(t('cf_del_school'))) return;
+  api('delete', { sheet: 'Schools', id: id }).then(function () { renderSchool(); });
+}
+
+function editHomework(id) {
+  var h = id ? (S.homework || []).filter(function (x) { return x.id === id; })[0] || {} : {};
+  openForm(id ? t('ft_hw_edit') : t('ft_hw_add'), [
+    { key: 'title', label: t('fl_homework'), value: h.title },
+    { key: 'subject', label: t('fl_subject_hw'), value: h.subject },
+    { key: 'due_date', label: t('fl_due'), type: 'date', value: h.due_date ? String(h.due_date).slice(0, 10) : todayStr() }
+  ], function (v) {
+    if (id) v.id = id; else v.status = 'todo';
+    v.child_id = S.child.id;
+    api('save', { sheet: 'Homework', record: v }).then(function () { closeModal(); toast(t('saved')); renderSchool(); });
+  });
+}
+function addHomework() { editHomework(); }
+function delHomework(id) {
+  if (!confirm(t('cf_del_homework'))) return;
+  api('delete', { sheet: 'Homework', id: id }).then(function () { renderSchool(); });
+}
+
+function doneHomework(id) {
+  api('save', { sheet: 'Homework', record: { id: id, status: 'done' } }).then(function () { toast(t('tst_hw_done')); renderSchool(); });
+}
+
+async function renderSetting() {
+  // ---------- ส่วนที่ไม่ต้องใช้ API: แสดงทันที (ไม่บล็อก) ----------
+  var html = '<div class="card"><h3>🌐 ' + t('set_lang') + '</h3>' +
+    '<div class="seg" style="margin-bottom:0">' +
+    '<button class="' + (LANG === 'th' ? 'active' : '') + '" onclick="setLang(\'th\')">ไทย</button>' +
+    '<button class="' + (LANG === 'en' ? 'active' : '') + '" onclick="setLang(\'en\')">English</button>' +
+    '</div></div>';
+
+   
+
+  html += '<div class="card"><h3>👶 ' + t('profile') + (canEdit() ? '<button class="btn sm" onclick="editChild()">＋ ' + t('add_child') + '</button>' : '') + '</h3>';
+
+
+
+  S.children.forEach(function (c) {
+   
+    var isGirl = String(c.gender || '').indexOf('หญิง') >= 0;
+    html += '<div class="child-item">' +
+      '<div class="child-top">' +
+      '<span class="ico-chip ' + (isGirl ? 'bg-pink' : 'bg-blue') + '">' + (isGirl ? '👧' : '👶') + '</span>' +
+      '<div class="grow"><b>' + esc(c.nickname || c.name) + '</b> <span class="badge ' + (isGirl ? 'b-girl' : 'b-boy') + '">' + clientAgeTH(c.birthdate) + '</span>' +
+      '<br><small>' + esc(c.name) + '</small></div>' +
+      (canEdit() ? btnEdit('editChild(\'' + c.id + '\')') : '') +
+      '</div>' +
+      '<div class="child-meta">' +
+      '<span>🎂 ' + fmtD(c.birthdate) + '</span><span class="' + (isGirl ? 'gcol-girl' : 'gcol-boy') + '" style="font-weight:700">' + (isGirl ? '♀' : '♂') + ' ' + esc(enumLabel(c.gender) || '-') + '</span>' +
+      '<span>🩸 ' + esc(c.blood_group || '-') + '</span><span>🏥 ' + esc(c.hospital || '-') + '</span>' +
+      '<span>📞 ' + esc(c.emergency_contact || '-') + '</span>' +
+      '</div></div>';
+  });
+  html += '</div>';
+
+  
+
+  // บัญชีเข้าสู่ระบบของตัวเอง
+  html += '<div class="card"><h3>🔐 ' + t('login_sec') + '</h3>' +
+    '<div class="row"><div class="grow">' + esc(S.user.name) + ' <span class="badge">' + esc(S.user.role) + '</span>' +
+    '<br><small>' + (S.user.email ? esc(S.user.email) : t('no_email_hint')) + '</small></div>' +
+    '<button class="btn sm gray" onclick="setCredentialsForm(\'' + S.user.id + '\')">' + (S.user.email ? t('change_pass') : t('set_pass')) + '</button></div>' +
+    '<p style="font-size:12px;color:var(--muted);margin-top:6px">' + t('login_note') + '</p>' +
+    (localStorage.getItem('bt_token') ? '<button class="btn red" style="width:100%;margin-top:10px" onclick="logout()">' + t('logout') + '</button>' : '') +
+    '</div>';
+
+   
+
+  // ที่ว่างสำหรับส่วนที่ต้องโหลดผ่าน API (settings + members)
+  html += '<div id="setExtra"></div>';
+
+
+  $('#moreBody').innerHTML = html; // << แสดงทันที ไม่รอ API
+
+  // ---------- ส่วนที่ต้องใช้ API: โหลดทีหลัง ไม่บล็อกหน้า ----------
+  var extra = '';
+  if (canEdit()) {
+    try {
+      var st = await api('settings.get');
+      extra += '<div class="card"><h3>🗂 ' + t('set_retention') + '</h3>' +
+        '<p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">' + t('retention_hint') + '</p>' +
+        '<div class="seg" style="margin-bottom:0">' +
+        [7, 15, 30].map(function (n) {
+          return '<button class="' + (Number(st.logRetentionDays) === n ? 'active' : '') + '" onclick="setRetention(' + n + ')">' + n + ' ' + t('days_unit') + '</button>';
+        }).join('') + '</div></div>';
+      extra += '<div class="card"><h3>🔔 ' + t('set_remind') + '</h3>' +
+        '<p style="font-size:12.5px;color:var(--muted);margin-bottom:8px">' + t('remind_lead') + '</p>' +
+        '<div class="seg" style="margin-bottom:12px">' +
+        [1, 3, 7].map(function (n) {
+          return '<button class="' + (Number(st.remindDays) === n ? 'active' : '') + '" onclick="setRemind(\'remindDays\',' + n + ')">' + t('before_n_days').replace('{n}', n) + '</button>';
+        }).join('') + '</div>' +
+        '<p style="font-size:12.5px;color:var(--muted);margin-bottom:8px">' + t('remind_time') + '</p>' +
+        '<div class="seg" style="margin-bottom:12px">' +
+        ['09:00', '17:00'].map(function (tm) {
+          return '<button class="' + (st.remindTime === tm ? 'active' : '') + '" onclick="setRemind(\'remindTime\',\'' + tm + '\')">' + tm + '</button>';
+        }).join('') + '</div>' +
+        '<div style="background:var(--accent-soft);padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.9">' +
+        '<b>' + t('remind_funcs') + '</b><br>' +
+        '🗓 ' + t('rf_appt') + '<br>💉 ' + t('rf_vaccine') + '<br>📦 ' + t('rf_stock') + '<br>🛡 ' + t('rf_insurance') + '<br>📚 ' + t('rf_homework') + '</div></div>';
+    } catch (e) { /* โหลด settings ไม่ได้ ก็ข้ามไป ไม่ให้หน้าพัง */ }
+  }
+  if (S.user.role === 'admin') {
+    try {
+      var users = await api('users.list');
+      var mHtml = '<div class="card"><h3>👥 ' + t('members') + '</h3>';
+      var ROLE_TH = { admin: t('role_admin'), editor: t('role_editor'), logger: t('role_logger'), viewer: t('role_viewer'), pending: t('role_pending') };
+      users.forEach(function (u) {
+        var isSelf = String(u.id) === String(S.user.id);
+        mHtml += '<div class="member">' +
+          '<div class="member-top">' +
+          '<span class="ico-chip bg-yellow">' + (u.picture_url ? '<img src="' + esc(u.picture_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:12px">' : '🙋') + '</span>' +
+          '<div class="grow"><b>' + esc(u.name) + '</b>' + (isSelf ? ' <span class="badge">' + t('you') + '</span>' : '') +
+          (u.email ? '<br><small>' + esc(u.email) + '</small>' : '') + '</div>' +
+          '</div>' +
+          '<div class="member-ctrls">' +
+          '<div class="role-select"><select onchange="setRole(\'' + u.id + '\', this.value)">' +
+          ['admin', 'editor', 'logger', 'viewer', 'pending'].map(function (r) {
+            return '<option value="' + r + '"' + (u.role === r ? ' selected' : '') + '>' + ROLE_TH[r] + '</option>';
+          }).join('') + '</select></div>' +
+          '<button class="btn sm gray" onclick="setCredentialsForm(\'' + u.id + '\',\'' + esc(u.name) + '\')">' + t('pass_short') + '</button>' +
+          (isSelf ? '' : btnDel('removeUser(\'' + u.id + '\',\'' + esc(u.name) + '\')')) +
+          '</div></div>';
+      });
+      mHtml += '<p style="font-size:12px;color:var(--muted);margin-top:8px">' + t('members_note') + '</p></div>';
+      extra += mHtml;
+    } catch (e) { /* โหลด members ไม่ได้ ก็ข้ามไป */ }
+  }
+  var box = $('#setExtra'); if (box) box.innerHTML = extra;
+}
+
+function setRole(userId, role) {
+  api('user.setRole', { targetId: userId, role: role }).then(function () { toast(t('tst_role')); });
+}
+
+function setRetention(n) {
+  api('settings.set', { logRetentionDays: n }).then(function () { toast(t('tst_retention').replace('{n}', n)); renderSetting(); });
+}
+function setRemind(key, val) {
+  var patch = {}; patch[key] = val;
+  api('settings.set', patch).then(function () { toast(t('tst_remind')); renderSetting(); });
+}
+
+function removeUser(userId, name) {
+  if (!confirm(t('cf_del_member').replace('{name}', name))) return;
+  api('user.remove', { targetId: userId }).then(function () { toast(t('tst_member_rm')); renderSetting(); });
+}
+
+function setCredentialsForm(targetId, name) {
+  openForm(t('ft_cred') + (name ? ' — ' + name : ''), [
+    { key: 'email', label: t('email'), type: 'email', placeholder: 'you@email.com' },
+    { key: 'password', label: t('fl_pass_min'), type: 'password' },
+    { key: 'confirm', label: t('fl_pass_confirm'), type: 'password' }
+  ], function (v) {
+    if (v.password !== v.confirm) { toast(t('err_pass_match')); return; }
+    api('user.setCredentials', { targetId: targetId, email: v.email, password: v.password })
+      .then(function () {
+        closeModal(); toast(t('tst_pass_set'));
+        if (targetId === S.user.id) S.user.email = v.email;
+        renderSetting();
+      });
+  });
+}
+
+function editChild(id) {
+  var c = id ? S.children.find(function (x) { return x.id === id; }) : {};
+  openForm(id ? t('ft_child_edit') : t('ft_child_add'), [
+    { key: 'name', label: t('fl_fullname'), value: c.name },
+    { key: 'nickname', label: t('fl_nickname'), value: c.nickname },
+    { key: 'gender', label: t('fl_gender'), type: 'select', options: enumOpts(['ชาย', 'หญิง']), value: c.gender },
+    { key: 'birthdate', label: t('fl_birthdate'), type: 'date', value: c.birthdate ? String(c.birthdate).slice(0, 10) : '' },
+    { key: 'blood_group', label: t('fl_blood'), type: 'select', options: ['', 'A', 'B', 'AB', 'O'], value: c.blood_group },
+    { key: 'hospital', label: t('fl_hospital'), value: c.hospital },
+    { key: 'doctor', label: t('fl_doctor'), value: c.doctor },
+    { key: 'emergency_contact', label: t('fl_emergency'), value: c.emergency_contact },
+    { key: 'allergies', label: t('fl_allergy_hist'), type: 'textarea', value: c.allergies },
+    { key: 'diseases', label: t('fl_disease'), type: 'textarea', value: c.diseases }
+  ], function (v) {
+    if (id) v.id = id;
+    api('save', { sheet: 'Children', record: v }).then(function (saved) {
+      closeModal(); toast(id ? t('tst_edited') : t('tst_child_added'));
+      return api('bootstrap');
+    }).then(function (boot) {
+      S.children = boot.children;
+      if (!S.child) S.child = S.children[0];
+      applyTheme(); renderChildSelect(); renderSetting();
+    });
+  });
+}
+</script>
+</body>
+</html>
